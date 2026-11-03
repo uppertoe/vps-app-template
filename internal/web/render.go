@@ -130,7 +130,7 @@ func (s *Server) deny(w http.ResponseWriter, r *http.Request, status int) {
 	if status == http.StatusUnauthorized {
 		v = deniedView{
 			Heading: "Sign-in is required",
-			Body:    "This page opens only after you have signed in. Please return to the home page and sign in from there.",
+			Body:    "This page will be available only after you have signed in. Please return to the home page and sign in from there.",
 		}
 	}
 	s.render(w, r, status, "error.html", v.Heading, v)

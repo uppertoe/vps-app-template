@@ -22,6 +22,8 @@ the usual changes; follow the nearest one.
   than `SignedIn()`, and ask the owner which domain.
 - Name new groups after the app with underscores, such as
   `starterapp_coordinators`.
+- Group membership is set in the sign-in service. Never store a list of a
+  group's members in the app, its database or its settings.
 - One path prefix has one access level: a route such as `/cases/{id}` guards
   everything under `/cases/`. Put an action with a narrower level under its
   own prefix (see `docs/RECIPES.md`).

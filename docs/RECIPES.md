@@ -232,11 +232,12 @@ the request.
 
 ## Emailing the members of a group
 
-The app cannot list a gateway group's members. To email a group of people,
-such as coordinators, keep their addresses in a setting, `COORDINATOR_EMAILS`
-in `.env`, read as a comma-separated list in `internal/config/config.go`.
-Say in the design docs that the list must be kept in step with the group by
-hand.
+Group membership is set in the sign-in service, and the app learns it from
+each request. Never keep a copy of a group's members in the app or its
+settings. An app cannot yet ask the sign-in service who is in a group when
+nobody is signed in, as a weekly email to a group would need; a way to do so
+is being added. Until it is, ask the platform owner before building a feature
+that emails a whole group.
 
 ## Receiving a webhook
 

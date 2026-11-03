@@ -60,8 +60,11 @@ These steps run in the server repo, as the scaffold's
 
 ### Checking the image's provenance
 
-Each image carries a signed record of the commit and workflow that built it.
-The signer is the kit's shared CI workflow, so name it when verifying:
+An image from a public repository carries a signed record of the commit and
+workflow that built it. GitHub does not sign one for a private repository on
+most plans; such an image still carries its source repository and commit as
+labels, which the server repo's provenance check reads. For a signed record,
+the signer is the kit's shared CI workflow, so name it when verifying:
 
 ```
 gh attestation verify oci://ghcr.io/<owner>/<repo>:main --owner <owner> \

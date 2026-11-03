@@ -408,7 +408,7 @@ import (
 
 // newGitHubHook builds the verified handler. The secret is at least 32
 // characters, set in the server's .env and in GitHub's webhook settings.
-func (s *Server) newGitHubHook(ctx context.Context) (http.Handler, error) {
+func (s *Server) newGitHubHook(ctx context.Context) (*webhook.Endpoint, error) {
 	secret := os.Getenv("GITHUB_WEBHOOK_SECRET")
 	if len(secret) < webhook.MinSecretBytes {
 		return nil, errors.New("GITHUB_WEBHOOK_SECRET must be at least 32 characters")
@@ -424,18 +424,11 @@ func (s *Server) newGitHubHook(ctx context.Context) (http.Handler, error) {
 		}), nil
 }
 
-// orNotFound serves h, or 404 when h was not built, as when make generate
-// lists the routes without a database or settings.
-func orNotFound(h http.Handler) http.Handler {
-	if h == nil {
-		return http.NotFoundHandler()
-	}
-	return h
-}
 ```
 
-Add a field `github http.Handler` to `Server`, build it at the end of `New`,
-before `return s, nil`, so the app refuses to start without the secret:
+Add a field `github *webhook.Endpoint` to `Server`, build it at the end of
+`New`, before `return s, nil`, so the app refuses to start without the
+secret:
 
 ```go
 	if d.Store != nil {
@@ -448,11 +441,15 @@ before `return s, nil`, so the app refuses to start without the secret:
 and register it in `Routes`:
 
 ```go
-rt.Handle("POST /hooks/github", access.Webhook("GitHub pushes"), orNotFound(s.github))
+rt.Handle("POST /hooks/github", access.Webhook("GitHub pushes"), s.github)
 ```
 
-A delivery that is unsigned, badly signed, stale, replayed or too large never
-reaches the function. Add `GITHUB_WEBHOOK_SECRET=CHANGE_ME` to
+The router accepts only a handler from `webhook.Handler` on a webhook route,
+so a webhook cannot be served without verification. While `make generate`
+lists the routes, `s.github` is nil and answers 404. A delivery that is
+unsigned, badly signed, stale, replayed or too large never reaches the
+function, and a delivery whose function answers anything but 2xx is offered
+again on the sender's retry. Add `GITHUB_WEBHOOK_SECRET=CHANGE_ME` to
 `.env.example`.
 
 ## Something that runs on a schedule

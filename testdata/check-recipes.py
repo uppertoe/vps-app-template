@@ -59,15 +59,17 @@ def main():
     srv = open(srv_path).read()
     route_lines = [l.strip() for b in go for l in b.splitlines() if l.strip().startswith("rt.")]
     srv = srv.replace("\treturn rt\n}", "\t" + "\n\t".join(route_lines) + "\n\n\treturn rt\n}")
-    if "github http.Handler" not in srv and any("s.github" in l for l in route_lines):
-        srv = re.sub(r"(type Server struct \{.*?)\n\}", r"\1\n\tgithub http.Handler\n}", srv, count=1, flags=re.S)
+    if "github *webhook.Endpoint" not in srv and any("s.github" in l for l in route_lines):
+        srv = re.sub(r"(type Server struct \{.*?)\n\}", r"\1\n\tgithub *webhook.Endpoint\n}", srv, count=1, flags=re.S)
+        srv = srv.replace("import (\n", 'import (\n\t"github.com/uppertoe/vps-app-kit/webhook"\n', 1)
         build = [b for b in go if b.lstrip().startswith("if d.Store != nil")][0]
         srv = srv.replace("\treturn s, nil\n}", build + "\treturn s, nil\n}", 1)
         srv = srv.replace("import (\n", 'import (\n\t"context"\n', 1)
     existing = "".join(open(os.path.join(web, f)).read() for f in os.listdir(web) if f.endswith(".go"))
     existing += srv
     for name in sorted(set(re.findall(r"\bs\.(\w+)\)?\s*$", "\n".join(route_lines), re.M))):
-        if f"func (s *Server) {name}(" not in existing:
+        is_field = re.search(r"type Server struct \{[^}]*\n\t" + name + r"\s", srv) is not None
+        if f"func (s *Server) {name}(" not in existing and not is_field:
             srv += f"\nfunc (s *Server) {name}(w http.ResponseWriter, r *http.Request) {{}}\n"
     open(srv_path, "w").write(srv)
 

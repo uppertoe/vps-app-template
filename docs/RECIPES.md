@@ -124,6 +124,96 @@ func (s *Store) ShiftsFrom(ctx context.Context, day string) ([]Shift, error) {
 The store holds one connection, so read every row into a slice, as above,
 before issuing another query.
 
+## Records that belong to one person
+
+The starter's notes are shared: everyone who can sign in reads them all.
+Decide for each kind of record who may read it, and when a record belongs
+to one person, store the owner and scope every query to them. The owner is
+always the signed-in identity from the gateway, never a value from a form.
+
+`internal/store/migrations/0003_drafts.sql`:
+
+```sql
+CREATE TABLE drafts (
+    id         INTEGER PRIMARY KEY,
+    owner      TEXT NOT NULL, -- the gateway's Remote-Email, lower-cased
+    body       TEXT NOT NULL,
+    created_at TEXT NOT NULL
+);
+CREATE INDEX drafts_owner ON drafts(owner);
+```
+
+`internal/store/drafts.go`, where every query names the owner:
+
+```go
+package store
+
+import "context"
+
+// Draft is one person's draft.
+type Draft struct {
+	ID   int64
+	Body string
+}
+
+// DraftsOf lists one person's drafts. There is no function that lists
+// everyone's, so a handler cannot show one person another's drafts.
+func (s *Store) DraftsOf(ctx context.Context, owner string) ([]Draft, error) {
+	rows, err := s.db.QueryContext(ctx, `SELECT id, body FROM drafts WHERE owner = ? ORDER BY id DESC`, owner)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var out []Draft
+	for rows.Next() {
+		var d Draft
+		if err := rows.Scan(&d.ID, &d.Body); err != nil {
+			return nil, err
+		}
+		out = append(out, d)
+	}
+	return out, rows.Err()
+}
+
+// DeleteDraft deletes a draft only if it belongs to owner, and reports
+// whether it did.
+func (s *Store) DeleteDraft(ctx context.Context, owner string, id int64) (bool, error) {
+	res, err := s.db.ExecContext(ctx, `DELETE FROM drafts WHERE id = ? AND owner = ?`, id, owner)
+	if err != nil {
+		return false, err
+	}
+	n, err := res.RowsAffected()
+	return n == 1, err
+}
+```
+
+The handler takes the owner from the identity:
+
+```go
+package web
+
+import (
+	"net/http"
+
+	"github.com/uppertoe/vps-app-kit/gateway"
+)
+
+func (s *Server) drafts(w http.ResponseWriter, r *http.Request) {
+	id, _ := gateway.From(r.Context())
+	list, err := s.store.DraftsOf(r.Context(), id.Email)
+	if err != nil {
+		s.fail(w, r, err)
+		return
+	}
+	s.render(w, r, http.StatusOK, "drafts.html", "Your drafts", list)
+}
+```
+
+Storing who owns a record stores their email address, so set `data_class`
+to `personal` and fill in the privacy pages. Test that one person cannot
+read, change or delete another's records, by requesting each route as a
+second person with the record's ID.
+
 ## Calling an outside service
 
 Declare the service in `app.yaml`, with what it is for and what it receives:
@@ -232,12 +322,62 @@ the request.
 
 ## Emailing the members of a group
 
-Group membership is set in the sign-in service, and the app learns it from
-each request. Never keep a copy of a group's members in the app or its
-settings. An app cannot yet ask the sign-in service who is in a group when
-nobody is signed in, as a weekly email to a group would need; a way to do so
-is being added. Until it is, ask the platform owner before building a feature
-that emails a whole group.
+Group membership is set in the sign-in service, and the app never keeps a
+copy. For work done when nobody is signed in, such as a weekly email to a
+group, the app reads the group's members from the sign-in service at the
+moment it needs them. List the group in `app.yaml`:
+
+```yaml
+members:
+  - starterapp_coordinators
+```
+
+Then read the members through `s.members` and send each person their own
+message, so that no one sees the others' addresses:
+
+```go
+package web
+
+import (
+	"context"
+	"fmt"
+	netmail "net/mail"
+
+	"github.com/uppertoe/vps-app-kit/mail"
+)
+
+// emailCoordinators sends one message to each member of the group, read
+// from the sign-in service at the moment of sending.
+func (s *Server) emailCoordinators(ctx context.Context, subject, text string) error {
+	addrs, err := s.members.Members(ctx, "starterapp_coordinators")
+	if err != nil {
+		return fmt.Errorf("reading the coordinators: %w", err)
+	}
+	for _, a := range addrs {
+		err := s.mail.Send(ctx, mail.Message{
+			From:    s.cfg.EmailFrom,
+			To:      []netmail.Address{{Address: a}},
+			Subject: subject,
+			Text:    text,
+		})
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+```
+
+Read the members each time; never store them. An error such as
+`gateway.ErrMembersRefused` means the app has not been given that group or
+the group does not exist yet, not that the group is empty, so report it
+rather than sending to nobody. Never fall back to a list of addresses kept
+anywhere else.
+
+Run `make generate` after changing `members`, and tell the platform owner:
+the gateway must be told which groups the app may read, and the app needs a
+token, as `docs/DEPLOYING.md` describes. Until then, `s.members` answers
+`gateway.ErrMembersNotConfigured`. Locally, it always does.
 
 ## Receiving a webhook
 

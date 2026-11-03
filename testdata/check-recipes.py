@@ -47,9 +47,11 @@ def main():
             write(os.path.join("internal", pkg, f"recipe{n_files}.go"), b)
         elif b.lstrip().startswith("// ") and "func (s *Store)" in b:
             write(os.path.join("internal", "store", "notes.go"), "\n" + b, "a")
+    n_sql = 1
     for lang, b in blocks:
         if lang == "sql":
-            write(os.path.join("internal", "store", "migrations", "0002_recipe.sql"), b)
+            n_sql += 1
+            write(os.path.join("internal", "store", "migrations", f"{n_sql:04d}_recipe.sql"), b)
         if lang == "html":
             write(os.path.join("internal", "web", "templates", "rota.html"), b)
 
@@ -58,7 +60,7 @@ def main():
     route_lines = [l.strip() for b in go for l in b.splitlines() if l.strip().startswith("rt.")]
     srv = srv.replace("\treturn rt\n}", "\t" + "\n\t".join(route_lines) + "\n\n\treturn rt\n}")
     if "github http.Handler" not in srv and any("s.github" in l for l in route_lines):
-        srv = srv.replace("\tsite   Site\n}", "\tsite   Site\n\tgithub http.Handler\n}")
+        srv = re.sub(r"(type Server struct \{.*?)\n\}", r"\1\n\tgithub http.Handler\n}", srv, count=1, flags=re.S)
         build = [b for b in go if b.lstrip().startswith("if d.Store != nil")][0]
         srv = srv.replace("\treturn s, nil\n}", build + "\treturn s, nil\n}", 1)
         srv = srv.replace("import (\n", 'import (\n\t"context"\n', 1)

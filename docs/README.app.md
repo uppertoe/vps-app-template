@@ -21,9 +21,20 @@ Python with Playwright only to run the browser check.
   in the local build.
 - If you work with an AI assistant such as Claude Code, ask it to read
   `AGENTS.md` first; the rules there are the ones CI enforces.
-  `docs/RECIPES.md` has worked examples of the usual changes.
+  `docs/RECIPES.md` has worked examples of the usual changes, and
+  `docs/SECURITY.md` sets out what keeps the app safe.
 - Before each push, run `make test`, `make lint` and `make generate`, and
   commit what changed. CI runs the same checks, and more, on every push.
+
+## Keeping the app up to date
+
+Renovate proposes each new version of `vps-app-kit` as a pull request. Patch
+releases merge on their own once CI passes; minor and major releases, and the
+CI workflow, wait for you to merge them. If such a pull request fails because
+a generated file changed, run `make generate`, commit, and push to its
+branch. If the repository is under your own account rather than
+`anaes-data-lab`, install the Renovate GitHub app (github.com/apps/renovate)
+on it; otherwise ask the platform owner to add it to the update bot.
 
 ## Commands
 

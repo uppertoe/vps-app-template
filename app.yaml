@@ -34,3 +34,8 @@ outbound: []
 
 # Services that send the app signed deliveries (see the kit's webhook package).
 webhooks: []
+
+# Gateway groups whose members the app reads when nobody is signed in, such
+# as for a weekly email to a group (see docs/RECIPES.md). The server gives
+# the app a private network to the gateway only when this list is not empty.
+members: []

@@ -11,6 +11,7 @@ import (
 
 	"github.com/uppertoe/vps-app-kit/access"
 	"github.com/uppertoe/vps-app-kit/assets"
+	"github.com/uppertoe/vps-app-kit/gateway"
 	"github.com/uppertoe/vps-app-kit/mail"
 	"github.com/uppertoe/vps-app-kit/router"
 
@@ -37,20 +38,25 @@ type Deps struct {
 	// Mail sends email: through SES, to the log, or nowhere, as
 	// EMAIL_BACKEND says.
 	Mail mail.Sender
-	Site Site
+	// Members reads a group's members from the gateway, for work done when
+	// nobody is signed in. It answers ErrMembersNotConfigured until the
+	// platform owner has enabled it for the app (see docs/RECIPES.md).
+	Members *gateway.MembersClient
+	Site    Site
 }
 
 // Server holds what the handlers share.
 type Server struct {
-	cfg    config.Config
-	store  *store.Store
-	log    *slog.Logger
-	http   *http.Client
-	mail   mail.Sender
-	static *assets.Set
-	brand  *assets.Set
-	pages  *pages
-	site   Site
+	cfg     config.Config
+	store   *store.Store
+	log     *slog.Logger
+	http    *http.Client
+	mail    mail.Sender
+	members *gateway.MembersClient
+	static  *assets.Set
+	brand   *assets.Set
+	pages   *pages
+	site    Site
 }
 
 // Site is what every page shows about the app.
@@ -81,7 +87,7 @@ func New(d Deps) (*Server, error) {
 		d.Log = slog.Default()
 	}
 	d.Site.AdminGroup = AdminGroup
-	s := &Server{cfg: d.Config, store: d.Store, log: d.Log, http: d.HTTP, mail: d.Mail,
+	s := &Server{cfg: d.Config, store: d.Store, log: d.Log, http: d.HTTP, mail: d.Mail, members: d.Members,
 		static: static, brand: brandSet, site: d.Site}
 	s.pages, err = parsePages(s)
 	if err != nil {

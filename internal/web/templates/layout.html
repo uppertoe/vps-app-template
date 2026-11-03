@@ -24,7 +24,7 @@
   <nav class="masthead-nav" x-data="menu">
     <button type="button" class="menu-button" x-on:click="toggle" x-bind:aria-expanded="expanded">Menu</button>
     <ul class="menu" x-bind:class="menuClass">
-      <li><a href="/notes">Notes</a></li>
+      <li><a href="/notes">Shared notes</a></li>
       {{if .Identity.InGroup .Site.AdminGroup}}<li><a href="/admin">Administration</a></li>{{end}}
       <li><a href="{{.Site.AuthURL}}/logout">Sign out</a></li>
     </ul>

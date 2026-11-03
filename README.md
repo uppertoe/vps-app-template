@@ -17,7 +17,11 @@ names), `make`, and a GitHub account. Docker is needed only to build the
 image locally, and Python with Playwright only to run the browser check.
 
 1. On GitHub, choose **Use this template**, then **Create a new
-   repository**. A private repository suits most apps.
+   repository**. A private repository suits most apps. Create it in the
+   `anaes-data-lab` organisation if you can (ask the platform owner to add
+   you): the platform's update bot then keeps the app's shared parts
+   current, as "Keeping the app up to date" below describes. A repository
+   under your own account works too, but you set up those updates yourself.
 2. Clone your repository and run `scripts/init.sh` from its root. The script
    asks for the app's name, title, address and data class, and for your name
    and contact address, renames everything, and runs the tests. Commit and push the result; CI runs on
@@ -48,6 +52,26 @@ image locally, and Python with Playwright only to run the browser check.
 | `deploy/apps/<name>/` | The folder to copy into the server repo; the `.caddy` file is generated |
 | `design-docs/` | Pages for the design docs site; `connections.md` is generated |
 | `compliance/` | Where a health app records that its safeguards are in place |
+| `docs/SECURITY.md` | The app's security invariants and the tests that prove each |
+
+## Keeping the app up to date
+
+The shared parts of the app come from `vps-app-kit`, pinned to a version in
+`go.mod` and in `.github/workflows/ci.yml`. Renovate proposes each new
+version as a pull request. Patch releases merge on their own once CI passes;
+minor and major releases, and the CI workflow, wait for you to merge them.
+If such a pull request fails because a generated file changed, run
+`make generate`, commit, and push to its branch.
+
+- **In `anaes-data-lab`:** ask the platform owner to add the repository to
+  the update bot. Nothing else is needed.
+- **Under your own account:** install the Renovate GitHub app
+  (github.com/apps/renovate) on the repository. The repository's
+  `renovate.json` already holds the right settings.
+
+Files copied from the template when the repository was created, such as
+`AGENTS.md`, the docs and the starter code, are never updated: later
+improvements to the template do not reach an existing app.
 
 ## Everyday commands
 

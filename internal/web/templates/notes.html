@@ -1,9 +1,10 @@
 {{define "content"}}
-<h1>Notes</h1>
+<h1>Shared notes</h1>
+<p class="lede">Everyone who can sign in can read every note here, and notes do not record who wrote them. The page shows how a shared list works; see docs/RECIPES.md for records that belong to one person.</p>
 <form class="card" method="post" action="/notes" hx-post="/notes" hx-target="#note-list" hx-swap="outerHTML"
       x-data="counter" data-max="{{.Data.MaxLength}}" x-on:htmx:after-request="clear">
   <label for="note-body">New note</label>
-  <textarea id="note-body" name="body" rows="3" required maxlength="{{.Data.MaxLength}}" x-model="text"></textarea>
+  <textarea id="note-body" name="body" rows="3" required maxlength="{{.Data.MaxLength}}" x-model="text">{{.Data.Body}}</textarea>
   <p class="hint" x-text="remaining"></p>
   <button type="submit" class="button">Save the note</button>
 </form>

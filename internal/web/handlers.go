@@ -18,6 +18,7 @@ func (s *Server) privacy(w http.ResponseWriter, r *http.Request) {
 type notesView struct {
 	Notes     []store.Note
 	Error     string
+	Body      string // the refused text, shown again
 	MaxLength int
 }
 
@@ -27,21 +28,26 @@ func (s *Server) notes(w http.ResponseWriter, r *http.Request) {
 		s.fail(w, r, err)
 		return
 	}
-	s.render(w, r, http.StatusOK, "notes.html", "Notes", notesView{Notes: notes, MaxLength: store.MaxNoteLength})
+	s.render(w, r, http.StatusOK, "notes.html", "Shared notes", notesView{Notes: notes, MaxLength: store.MaxNoteLength})
 }
 
-// addNote answers htmx with the refreshed list, and a plain form post with a
-// redirect, so the page works without JavaScript too.
+// addNote answers htmx with the refreshed list. A plain form post is
+// redirected after a successful save, and shown the page again with the
+// error and the typed text when the note is refused, so the page works
+// without JavaScript too.
 func (s *Server) addNote(w http.ResponseWriter, r *http.Request) {
 	v := notesView{MaxLength: store.MaxNoteLength}
-	if _, err := s.store.AddNote(r.Context(), r.FormValue("body")); err != nil {
+	body := r.FormValue("body")
+	if _, err := s.store.AddNote(r.Context(), body); err != nil {
 		if !errors.Is(err, store.ErrNoteLength) {
 			s.fail(w, r, err)
 			return
 		}
 		v.Error = "A note must be between 1 and 2,000 characters."
+		v.Body = body
 	}
-	if r.Header.Get("HX-Request") != "true" {
+	htmx := r.Header.Get("HX-Request") == "true"
+	if !htmx && v.Error == "" {
 		http.Redirect(w, r, "/notes", http.StatusSeeOther)
 		return
 	}
@@ -51,7 +57,11 @@ func (s *Server) addNote(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	v.Notes = notes
-	s.renderPartial(w, r, "note-list", v)
+	if htmx {
+		s.renderPartial(w, r, "note-list", v)
+		return
+	}
+	s.render(w, r, http.StatusUnprocessableEntity, "notes.html", "Shared notes", v)
 }
 
 type adminView struct {

@@ -59,6 +59,12 @@ the usual changes; follow the nearest one.
 
 ## Data
 
+- Decide who may read each kind of record before writing it. A record that
+  belongs to one person stores its owner, taken from `gateway.From`, and
+  every query that reads, changes or deletes it names the owner in its
+  `WHERE` clause; `docs/RECIPES.md` shows the pattern. A record shared by
+  everyone signed in, like the starter's notes, says so on the page. Test
+  that one person cannot reach another's records.
 - All data lives in SQLite through `internal/store`. Every query passes its
   values as parameters (`?`). Never build SQL by joining strings.
 - A schema change is a new file, `internal/store/migrations/0002_<what>.sql`.

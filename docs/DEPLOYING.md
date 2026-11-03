@@ -17,9 +17,11 @@ page sets out what each of you does.
 3. **Check `app.yaml`.** The data class must be honest, and every outside
    service the app talks to must be listed.
 4. **Give the server's account read access to the image.** If the
-   repository is private, open the package on GitHub (Packages, then the
-   image, then Package settings) and add the platform owner's account with
-   read access. A public repository's image is public already.
+   repository is private and under your own account, open the package on
+   GitHub (Packages, then the image, then Package settings) and add the
+   platform owner's account with read access, so that the server can pull
+   it and its update bot can see new builds. An image in `anaes-data-lab`,
+   or from a public repository, needs nothing.
 5. **Send the platform owner a short note** with the repository's address,
    the address the app should be served at, any settings it needs in its
    `.env` (the names from `deploy/apps/<name>/.env.example`, never the
@@ -51,11 +53,22 @@ These steps run in the server repo, as the scaffold's
 5. **Groups.** Create the groups the app's routes use on the sign-in
    service's Groups page (it lists them once the routes are rendered), and
    add the people.
-6. **Backups.** If the app holds anything worth keeping, copy
+6. **Group members.** If `app.yaml` lists groups under `members`, the
+   app reads those groups' members from the gateway. Add the app to
+   `MEMBER_READERS` in `apps/auth/.env` (`<name>=<group>,<group>`), set
+   `MEMBER_READER_TOKEN_<NAME>` there to a new token
+   (`openssl rand -hex 32`; the name upper-cased, with `-` as `_`), and put
+   the same token in the app's `.env` as `GATEWAY_MEMBERS_TOKEN`, with
+   `GATEWAY_MEMBERS_URL=http://auth:8081`. The route renderer gives the app
+   a private network to the gateway from the `scaffold-members` line in its
+   `.caddy` file; never add the app to `auth_proxy`, and never publish port
+   8081. After deploying, `docker compose exec <name> /app -members <group>`
+   shows what the app receives.
+7. **Backups.** If the app holds anything worth keeping, copy
    `backup.env.example` to `backup/services/<name>.env`, set its password,
    and run the backup playbook. The backup copies the hourly snapshot in
    `/data/snapshot`, never the live database.
-7. **DNS and deploy.** Point `<subdomain>.<domain>` at the server, commit,
+8. **DNS and deploy.** Point `<subdomain>.<domain>` at the server, commit,
    and run `./deploy`.
 
 ### Checking the image's provenance

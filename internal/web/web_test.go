@@ -56,7 +56,7 @@ func TestPagesRender(t *testing.T) {
 		status              int
 		contains            string
 	}{
-		{"/", "", "", 200, "Sign in to see the notes"},
+		{"/", "", "", 200, "Sign in to see the shared notes"},
 		{"/privacy", "", "", 200, "holds no personal information"},
 		{"/notes", "ann@example.org", "user", 200, "No notes have been saved yet."},
 		{"/notes", "", "", 401, "Sign-in is required"},
@@ -103,6 +103,13 @@ func TestAddNote(t *testing.T) {
 	}
 	if w := post("", true); !strings.Contains(w.Body.String(), "between 1 and 2,000 characters") {
 		t.Fatalf("empty note: %s", w.Body.String())
+	}
+	// Without JavaScript, a refused note shows the page again with the
+	// error and the typed text, never a redirect that hides the refusal.
+	long := strings.Repeat("x", 2001)
+	w := post(long, false)
+	if w.Code != http.StatusUnprocessableEntity || !strings.Contains(w.Body.String(), "between 1 and 2,000 characters") || !strings.Contains(w.Body.String(), long) {
+		t.Fatalf("refused form post: %d", w.Code)
 	}
 }
 

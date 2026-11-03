@@ -5,6 +5,8 @@
 //	server -routes       print every route and its access level
 //	server -caddy        print the Caddy snippet generated from the routes
 //	server -connections  print design-docs/connections.md from app.yaml
+//	server -members G    print group G's members as the gateway gives them to
+//	                     this app (run inside the container to check the wiring)
 package main
 
 import (
@@ -17,6 +19,7 @@ import (
 	"time"
 
 	"github.com/uppertoe/vps-app-kit/egress"
+	"github.com/uppertoe/vps-app-kit/gateway"
 	"github.com/uppertoe/vps-app-kit/mail"
 	"github.com/uppertoe/vps-app-kit/router"
 	"github.com/uppertoe/vps-app-kit/serve"
@@ -34,6 +37,7 @@ func main() {
 	routes := flag.Bool("routes", false, "print the routes and exit")
 	caddy := flag.Bool("caddy", false, "print the generated Caddy snippet and exit")
 	connections := flag.Bool("connections", false, "print the connections page and exit")
+	members := flag.String("members", "", "print a group's members as the gateway gives them to this app, and exit")
 	flag.Parse()
 
 	if *healthcheck {
@@ -45,6 +49,21 @@ func main() {
 	}
 	if *connections {
 		fmt.Print(m.ConnectionsPage())
+		return
+	}
+	if *members != "" {
+		mc, err := gateway.NewMembersClient(envOr("GATEWAY_MEMBERS_URL", ""), envOr("GATEWAY_MEMBERS_TOKEN", ""))
+		if err != nil {
+			fatal(err)
+		}
+		list, err := mc.Members(context.Background(), *members)
+		if err != nil {
+			fatal(err)
+		}
+		fmt.Printf("%d members of %s\n", len(list), *members)
+		for _, a := range list {
+			fmt.Println(a)
+		}
 		return
 	}
 	b, err := brand.Load()
@@ -65,7 +84,7 @@ func main() {
 			fmt.Print(rt.Table())
 			return
 		}
-		out, err := rt.Caddy(router.Site{Name: m.Name, Host: m.SiteHost(), Port: m.Port})
+		out, err := rt.Caddy(router.Site{Name: m.Name, Host: m.SiteHost(), Port: m.Port, MemberGroups: m.Members})
 		if err != nil {
 			fatal(err)
 		}
@@ -93,13 +112,18 @@ func main() {
 	defer stopSnapshots()
 	go snapshotLoop(snapCtx, log, st.Path(), cfg.SnapshotPath)
 
+	membersClient, err := gateway.NewMembersClient(cfg.MembersURL, cfg.MembersToken)
+	if err != nil {
+		fatal(err)
+	}
 	srv, err := web.New(web.Deps{
-		Config: cfg,
-		Store:  st,
-		Log:    log,
-		HTTP:   egress.New(m.Hosts()),
-		Mail:   mailer(cfg, log),
-		Site:   site,
+		Members: membersClient,
+		Config:  cfg,
+		Store:   st,
+		Log:     log,
+		HTTP:    egress.New(m.Hosts()),
+		Mail:    mailer(cfg, log),
+		Site:    site,
 	})
 	if err != nil {
 		fatal(err)

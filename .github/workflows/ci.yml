@@ -10,7 +10,7 @@ jobs:
   ci:
     # The platform's checks, container probe and image publishing. Renovate
     # proposes updates to this pin; a person merges them.
-    uses: uppertoe/vps-app-kit/.github/workflows/app-ci.yml@3994d82ab79576bb8ea8cb2236fb7a4f0f7b351e
+    uses: uppertoe/vps-app-kit/.github/workflows/app-ci.yml@d4fc41b967653e441e8d290d3298c9b333b210d3
     permissions:
       contents: read
       packages: write

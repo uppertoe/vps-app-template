@@ -29,7 +29,8 @@ fi
 base="$work/base"
 rsync -a --exclude .git --exclude data --exclude testdata "$root/" "$base/"
 (cd "$base" && bash scripts/init.sh --name demo-app --title "Demo app" --subdomain demo \
-  --module github.com/example/demo-app --owner example --repo demo-app --data-class none --yes >/dev/null)
+  --module github.com/example/demo-app --owner example --repo demo-app --data-class none \
+  --contact "Demo Person" --contact-email demo@example.org --organisation "Example Hospital" --yes >/dev/null)
 (cd "$base" && git init -q -b main && git add -A && git -c user.name=ci -c user.email=ci@example.org commit -q -m base)
 
 if ! (cd "$base" && "$KITLINT" all -base HEAD . >"$work/baseline.txt" 2>&1); then

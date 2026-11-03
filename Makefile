@@ -19,7 +19,7 @@ test:
 
 # The platform's checks on this app's code and templates.
 lint:
-	go run $(KIT)/cmd/kitlint@$(KIT_VERSION) .
+	go run $(KIT)/cmd/kitlint@$(KIT_VERSION) all .
 
 # Regenerate the files built from the code and the manifest. Commit the
 # result; CI fails if these files differ from a fresh generation.

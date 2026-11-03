@@ -17,7 +17,13 @@ document.addEventListener("alpine:init", () => {
   Alpine.data("counter", () => ({
     text: "",
     max: 0,
-    init() { this.max = Number(this.$el.dataset.max) || 0; },
+    init() {
+      this.max = Number(this.$el.dataset.max) || 0;
+      // Keep what the page was rendered with, such as a refused form shown
+      // again: x-model would otherwise replace it with the empty default.
+      const box = this.$el.querySelector("textarea, input[type=text]");
+      if (box) { this.text = box.value; }
+    },
     get remaining() {
       const left = this.max - this.text.length;
       return left === 1 ? "1 character left" : left + " characters left";

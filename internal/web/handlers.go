@@ -11,6 +11,10 @@ func (s *Server) home(w http.ResponseWriter, r *http.Request) {
 	s.render(w, r, http.StatusOK, "home.html", s.site.Title, nil)
 }
 
+func (s *Server) privacy(w http.ResponseWriter, r *http.Request) {
+	s.render(w, r, http.StatusOK, "privacy.html", "Privacy", nil)
+}
+
 type notesView struct {
 	Notes     []store.Note
 	Error     string

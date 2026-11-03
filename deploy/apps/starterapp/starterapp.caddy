@@ -10,35 +10,43 @@ starter.{$DOMAIN} {
 			import strip_public
 		}
 	}
-	# GET /admin: group starterapp_admin
-	@r2 path /admin
+	# GET /privacy: public (the privacy policy)
+	@r2 path /privacy
 	handle @r2 {
+		# scaffold-lint: public -- the privacy policy
+		reverse_proxy starterapp:8080 {
+			import strip_public
+		}
+	}
+	# GET /admin: group starterapp_admin
+	@r3 path /admin
+	handle @r3 {
 		import protected_groups "starterapp_admin" starterapp:8080
 	}
 	# GET /notes, POST /notes: signed in
-	@r3 path /notes
-	handle @r3 {
+	@r4 path /notes
+	handle @r4 {
 		import protected starterapp:8080
 	}
 	# GET /<$>: public (the landing page)
-	@r4 path /
-	handle @r4 {
+	@r5 path /
+	handle @r5 {
 		# scaffold-lint: public -- the landing page
 		reverse_proxy starterapp:8080 {
 			import strip_public
 		}
 	}
 	# GET /static/: public (stylesheets, scripts and fonts)
-	@r5 path /static /static/*
-	handle @r5 {
+	@r6 path /static /static/*
+	handle @r6 {
 		# scaffold-lint: public -- stylesheets, scripts and fonts
 		reverse_proxy starterapp:8080 {
 			import strip_public
 		}
 	}
 	# GET /brand/: public (logo and icons)
-	@r6 path /brand /brand/*
-	handle @r6 {
+	@r7 path /brand /brand/*
+	handle @r7 {
 		# scaffold-lint: public -- logo and icons
 		reverse_proxy starterapp:8080 {
 			import strip_public

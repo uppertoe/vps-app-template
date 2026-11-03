@@ -22,7 +22,7 @@ if [[ ! -f app.yaml ]] || ! grep -q '^name: starterapp$' app.yaml; then
   exit 1
 fi
 
-name="" title="" subdomain="" module="" owner="" repo="" data_class="" yes=0
+name="" title="" subdomain="" module="" owner="" repo="" data_class="" contact="" contact_email="" organisation="" yes=0
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --name) name="$2"; shift 2 ;;
@@ -32,6 +32,9 @@ while [[ $# -gt 0 ]]; do
     --owner) owner="$2"; shift 2 ;;
     --repo) repo="$2"; shift 2 ;;
     --data-class) data_class="$2"; shift 2 ;;
+    --contact) contact="$2"; shift 2 ;;
+    --contact-email) contact_email="$2"; shift 2 ;;
+    --organisation) organisation="$2"; shift 2 ;;
     --yes) yes=1; shift ;;
     *) echo "init.sh: unknown option $1" >&2; exit 2 ;;
   esac
@@ -62,6 +65,9 @@ ask title "The app's name as people see it" ""
 ask subdomain "Subdomain the app is served at" "$name"
 ask module "Go module path" "github.com/$owner/$repo"
 ask data_class "Most sensitive information the app will hold: none, personal or health" "none"
+ask contact "Your name, as the app's contact in its design docs" ""
+ask contact_email "The address people should write to about the app" ""
+ask organisation "The organisation the app belongs to, for the footer" ""
 
 fail() { echo "init.sh: $*" >&2; exit 1; }
 [[ "$name" =~ ^[a-z][a-z0-9-]*$ ]] || fail "the app name must be lower-case letters, digits and hyphens, starting with a letter"
@@ -70,7 +76,14 @@ fail() { echo "init.sh: $*" >&2; exit 1; }
 [[ "$module" =~ ^[a-z0-9.-]+(/[A-Za-z0-9._-]+)+$ ]] || fail "the module path must look like github.com/owner/repo"
 [[ "$owner" =~ ^[A-Za-z0-9-]+$ && "$repo" =~ ^[A-Za-z0-9._-]+$ ]] || fail "the GitHub owner and repository are required"
 case "$data_class" in none|personal|health) ;; *) fail "the data class must be none, personal or health" ;; esac
-group="${name//-/_}_admin"
+oneline() { [[ -n "$1" && "$1" != *'"'* && "$1" != *:* && "$1" != *$'\n'* ]]; }
+oneline "$contact" || fail "your name is required, on one line without quotes or colons"
+[[ "$contact_email" =~ ^[^@[:space:]]+@[^@[:space:]]+\.[^@[:space:]]+$ ]] || fail "the contact address must be an email address"
+oneline "$organisation" || fail "the organisation is required, on one line without quotes or colons"
+# Groups take the app's name with underscores, so every group the app
+# defines (starterapp_admin, starterapp_reports in the recipes) is renamed.
+prefix="${name//-/_}"
+group="${prefix}_admin"
 
 if [[ $yes -ne 1 ]]; then
   echo
@@ -82,6 +95,7 @@ if [[ $yes -ne 1 ]]; then
   echo "  Image:       ghcr.io/$(lc "$owner")/$(lc "$repo")"
   echo "  Admin group: $group"
   echo "  Data class:  $data_class"
+  echo "  Contact:     $contact <$contact_email>, $organisation"
   read -r -p "Continue? [y/N] " ok
   [[ "$ok" =~ ^[Yy] ]] || fail "nothing has been changed"
 fi
@@ -97,16 +111,22 @@ while IFS= read -r -d '' f; do files+=("$f"); done < <(
     -not -name '*.png' -not -name '*.woff2' -not -name 'init.sh' -print0)
 
 export NAME="$name" TITLE="$title" SUBDOMAIN="$subdomain" MODULE="$module" \
-  OWNER="$owner" IMAGE="ghcr.io/$(lc "$owner")/$(lc "$repo")" GROUP="$group" DATA_CLASS="$data_class"
+  OWNER="$owner" IMAGE="ghcr.io/$(lc "$owner")/$(lc "$repo")" PREFIX="$prefix" DATA_CLASS="$data_class" \
+  CONTACT="$contact" CONTACT_EMAIL="$contact_email" ORGANISATION="$organisation"
 perl -0pi -e '
   s{github\.com/uppertoe/vps-app-template}{$ENV{MODULE}}g;
-  s{starterapp_admin}{$ENV{GROUP}}g;
+  s{starterapp_}{$ENV{PREFIX}_}g;
   s{starterapp}{$ENV{NAME}}g;
   s{Starter app}{$ENV{TITLE}}g;
   s{^subdomain: starter$}{subdomain: $ENV{SUBDOMAIN}}m;
   s{^data_class: none$}{data_class: $ENV{DATA_CLASS}}m;
   s{ghcr\.io/OWNER/REPO}{$ENV{IMAGE}}g;
 ' "${files[@]}"
+# Your details in the design docs and the brand.
+perl -pi -e 's{^contact: Your name$}{contact: $ENV{CONTACT}}; s{^decided-by: Your name$}{decided-by: $ENV{CONTACT}}' design-docs/_index.md
+perl -pi -e 's{^organisation: .*$}{organisation: $ENV{ORGANISATION}}; s{^contact_email: .*$}{contact_email: $ENV{CONTACT_EMAIL}}' brand/brand.yaml
+# The app's README replaces the template's, which describes starting an app.
+mv docs/README.app.md README.md
 # The template's owner is replaced by yours, in CODEOWNERS only.
 perl -pi -e 's{\@uppertoe\b}{\@$ENV{OWNER}}g' .github/CODEOWNERS
 

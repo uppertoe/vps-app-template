@@ -29,9 +29,9 @@ func newServer(t *testing.T, site Site) http.Handler {
 	}
 	t.Cleanup(func() { st.Close() })
 	if site.Title == "" {
-		site = Site{Title: "Starter app", Organisation: "Org", ContactEmail: "help@example.org", AuthURL: "https://auth.example.org"}
+		site = Site{Title: "Starter app", Organisation: "Org", ContactEmail: "help@example.org", AuthURL: "https://auth.example.org", DataClass: "none"}
 	}
-	srv, err := New(config.Config{PublicURL: origin}, st, slog.New(slog.NewTextHandler(os.Stderr, nil)), site)
+	srv, err := New(Deps{Config: config.Config{PublicURL: origin}, Store: st, Log: slog.New(slog.NewTextHandler(os.Stderr, nil)), Site: site})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -57,6 +57,7 @@ func TestPagesRender(t *testing.T) {
 		contains            string
 	}{
 		{"/", "", "", 200, "Sign in to see the notes"},
+		{"/privacy", "", "", 200, "holds no personal information"},
 		{"/notes", "ann@example.org", "user", 200, "No notes have been saved yet."},
 		{"/notes", "", "", 401, "Sign-in is required"},
 		{"/admin", "ann@example.org", "user", 403, "You do not have access to this page"},

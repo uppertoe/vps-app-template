@@ -9,12 +9,15 @@ package main
 
 import (
 	"context"
+	"errors"
 	"flag"
 	"fmt"
 	"log/slog"
 	"os"
 	"time"
 
+	"github.com/uppertoe/vps-app-kit/egress"
+	"github.com/uppertoe/vps-app-kit/mail"
 	"github.com/uppertoe/vps-app-kit/router"
 	"github.com/uppertoe/vps-app-kit/serve"
 	"github.com/uppertoe/vps-app-kit/sqlitex"
@@ -48,11 +51,12 @@ func main() {
 	if err != nil {
 		fatal(err)
 	}
-	site := web.Site{Title: m.Title, Organisation: b.Organisation, ContactEmail: b.ContactEmail, HealthUnattested: app.HealthUnattested(m)}
+	site := web.Site{Title: m.Title, Organisation: b.Organisation, ContactEmail: b.ContactEmail,
+		HealthUnattested: app.HealthUnattested(m), DataClass: string(m.DataClass)}
 
 	if *routes || *caddy {
 		// The route list needs no database or settings.
-		srv, err := web.New(config.Config{PublicURL: "https://generate.invalid"}, nil, nil, site)
+		srv, err := web.New(web.Deps{Config: config.Config{PublicURL: "https://generate.invalid"}, Site: site})
 		if err != nil {
 			fatal(err)
 		}
@@ -89,7 +93,14 @@ func main() {
 	defer stopSnapshots()
 	go snapshotLoop(snapCtx, log, st.Path(), cfg.SnapshotPath)
 
-	srv, err := web.New(cfg, st, log, site)
+	srv, err := web.New(web.Deps{
+		Config: cfg,
+		Store:  st,
+		Log:    log,
+		HTTP:   egress.New(m.Hosts()),
+		Mail:   mailer(cfg, log),
+		Site:   site,
+	})
 	if err != nil {
 		fatal(err)
 	}
@@ -103,6 +114,25 @@ func snapshotLoop(ctx context.Context, log *slog.Logger, dbPath, dest string) {
 	sqlitex.SnapshotEvery(ctx, dbPath, dest, time.Hour, func(err error) {
 		log.Error("snapshot failed", "err", err)
 	})
+}
+
+// mailer picks the email back end from EMAIL_BACKEND.
+func mailer(cfg config.Config, log *slog.Logger) mail.Sender {
+	switch cfg.EmailBackend {
+	case "smtp":
+		return mail.SMTP{Host: cfg.SMTPHost, Port: 587, Username: cfg.SMTPUser, Password: cfg.SMTPPass}
+	case "log":
+		return mail.Log{Logger: log}
+	}
+	return noMail{}
+}
+
+// noMail refuses to send, so a feature that sends email fails visibly when
+// EMAIL_BACKEND is off rather than dropping the message.
+type noMail struct{}
+
+func (noMail) Send(context.Context, mail.Message) error {
+	return errors.New("email is off (EMAIL_BACKEND=off)")
 }
 
 func envOr(k, def string) string {

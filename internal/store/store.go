@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/uppertoe/vps-app-kit/sqlitex"
+	"github.com/uppertoe/vps-app-kit/webhook"
 )
 
 //go:embed migrations/*.sql
@@ -47,3 +48,9 @@ func (s *Store) Close() error { return s.db.Close() }
 func (s *Store) Path() string { return s.path }
 
 func now() string { return time.Now().UTC().Format(time.RFC3339Nano) }
+
+// WebhookReplay keeps webhook delivery IDs in the app's database, so a
+// replayed delivery is refused (see docs/RECIPES.md).
+func (s *Store) WebhookReplay(ctx context.Context) (*webhook.SQLiteReplay, error) {
+	return webhook.NewSQLiteReplay(ctx, s.db)
+}

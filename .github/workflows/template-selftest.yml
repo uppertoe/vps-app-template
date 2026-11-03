@@ -30,6 +30,8 @@ jobs:
         if: github.event_name == 'schedule'
         run: go get github.com/uppertoe/vps-app-kit@latest && go mod tidy
       - run: testdata/run-unsafe.sh
+      - name: Every recipe in docs/RECIPES.md compiles
+        run: python3 testdata/check-recipes.py
 
   browser:
     name: Pages work in a browser under the CSP

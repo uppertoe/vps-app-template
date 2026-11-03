@@ -1,9 +1,9 @@
-# Copy this folder to apps/starterapp/ in the server repo. The server repo
-# pins the image by digest (Renovate keeps the pin current); the tag here
-# names the commit CI built.
+# Copy this folder to apps/starterapp/ in the server repo, then pin the image
+# by digest (image: ghcr.io/OWNER/REPO:main@sha256:...). CI moves the "main"
+# tag with every build, and Renovate proposes each new digest.
 services:
   starterapp:
-    image: ghcr.io/OWNER/REPO:sha-COMMIT
+    image: ghcr.io/OWNER/REPO:main
     restart: unless-stopped
     # CIS Docker section 5 hardening. The audit and CI check every line.
     user: "65532:65532"

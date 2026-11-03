@@ -12,13 +12,29 @@ sets out the rules in the form an assistant follows.
 
 ## Starting an app
 
-1. On GitHub, choose **Use this template** and create your repository.
-2. Clone it, then run `scripts/init.sh` from the repository root. It asks
-   for the app's name, title, address and data class, renames everything,
-   and runs the tests. Commit the result.
-3. Run the app locally with `make run`, then open
-   `http://127.0.0.1:8080/dev/identity` to choose who you are signed in as.
-   The stand-in for the gateway exists only in this local build.
+You need Git, Go 1.26 or later (Go downloads the exact version the app
+names), `make`, and a GitHub account. Docker is needed only to build the
+image locally, and Python with Playwright only to run the browser check.
+
+1. On GitHub, choose **Use this template**, then **Create a new
+   repository**. A private repository suits most apps.
+2. Clone your repository and run `scripts/init.sh` from its root. The script
+   asks for the app's name, title, address and data class, and for your name
+   and contact address, renames everything, and runs the tests. Commit and push the result; CI runs on
+   every push.
+3. Run the app with `make run`, then open
+   `http://127.0.0.1:8080/dev/identity` and choose who you are signed in as.
+   The role comes first (`user` or `admin`), then any groups, such as
+   `user,<name>_admin`. This stand-in for the sign-in service exists only in
+   the local build.
+4. Build the app. If you work with an AI assistant such as Claude Code, ask
+   it to read `AGENTS.md` first; the rules there are the ones CI enforces.
+   `docs/RECIPES.md` has worked examples of the usual changes: a new page,
+   a database change, an outside service, email, a webhook and a scheduled
+   job.
+5. Before each push, run `make test`, `make lint` and `make generate`, and
+   commit what changed.
+6. When the app is ready to go on the server, follow `docs/DEPLOYING.md`.
 
 ## What you get
 
@@ -45,12 +61,9 @@ sets out the rules in the form an assistant follows.
 
 ## Deploying
 
-CI builds and publishes an image tagged with the commit on every push to
-`main`. In the server repo, copy `deploy/apps/<name>/` to `apps/<name>/`, pin
-the image by digest, add the compose file to the `include:` list, re-render
-the Caddy routes and deploy, as the scaffold's `docs/04-server-repo.md`
-describes. Point the backup at the snapshot folder with
-`backup.env.example`.
+CI publishes the image on every push to `main`. The platform owner puts it
+on the server; `docs/DEPLOYING.md` sets out what you send them and what they
+do with it.
 
 ## Data class
 

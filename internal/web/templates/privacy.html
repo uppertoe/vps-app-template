@@ -1,0 +1,17 @@
+{{define "content"}}
+<h1>Privacy</h1>
+{{if eq .Site.DataClass "none"}}
+<p>{{.Site.Title}} holds no personal information. The sign-in service records who signs in and when, as it does for every app on this server.</p>
+{{else}}
+<p>Replace this page with the app's privacy policy, written for the people whose information it holds. Keep it in step with design-docs/privacy.md.</p>
+<h2>What the app holds</h2>
+<p>State each kind of information the app holds, and about whom.</p>
+<h2>Who can see it</h2>
+<p>State who can see each kind of information.</p>
+<h2>Where it is kept</h2>
+<p>State where the information is stored and backed up, and which outside services receive any of it.</p>
+<h2>How long it is kept</h2>
+<p>State how long each kind of information is kept, including in backups, and how a person can ask for their information to be corrected or deleted.</p>
+{{end}}
+<p>If you have a question about your information, you can contact <a href="mailto:{{.Site.ContactEmail}}">{{.Site.ContactEmail}}</a>.</p>
+{{end}}

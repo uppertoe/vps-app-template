@@ -11,6 +11,7 @@ import (
 
 	"github.com/uppertoe/vps-app-kit/access"
 	"github.com/uppertoe/vps-app-kit/assets"
+	"github.com/uppertoe/vps-app-kit/mail"
 	"github.com/uppertoe/vps-app-kit/router"
 
 	"github.com/uppertoe/vps-app-template/brand"
@@ -25,11 +26,27 @@ var embedded embed.FS
 // administrator adds people to it on the gateway's Groups page.
 const AdminGroup = "starterapp_admin"
 
+// Deps are what the server is built from. main.go fills every field.
+type Deps struct {
+	Config config.Config
+	Store  *store.Store
+	Log    *slog.Logger
+	// HTTP is the only client for outside services. It reaches only the
+	// hosts listed under outbound in app.yaml (see docs/RECIPES.md).
+	HTTP *http.Client
+	// Mail sends email: through SES, to the log, or nowhere, as
+	// EMAIL_BACKEND says.
+	Mail mail.Sender
+	Site Site
+}
+
 // Server holds what the handlers share.
 type Server struct {
 	cfg    config.Config
 	store  *store.Store
 	log    *slog.Logger
+	http   *http.Client
+	mail   mail.Sender
 	static *assets.Set
 	brand  *assets.Set
 	pages  *pages
@@ -44,11 +61,13 @@ type Site struct {
 	HealthUnattested bool
 	AuthURL          string
 	AdminGroup       string
+	// DataClass is app.yaml's data_class: none, personal or health.
+	DataClass string
 }
 
-// New builds the server. st may be nil when only the route list is needed
-// (make generate), since no handler runs then.
-func New(cfg config.Config, st *store.Store, log *slog.Logger, site Site) (*Server, error) {
+// New builds the server. Store may be nil when only the route list is
+// needed (make generate), since no handler runs then.
+func New(d Deps) (*Server, error) {
 	staticFS, _ := fs.Sub(embedded, "static")
 	static, err := assets.New(staticFS, "/static/")
 	if err != nil {
@@ -58,8 +77,12 @@ func New(cfg config.Config, st *store.Store, log *slog.Logger, site Site) (*Serv
 	if err != nil {
 		return nil, err
 	}
-	site.AdminGroup = AdminGroup
-	s := &Server{cfg: cfg, store: st, log: log, static: static, brand: brandSet, site: site}
+	if d.Log == nil {
+		d.Log = slog.Default()
+	}
+	d.Site.AdminGroup = AdminGroup
+	s := &Server{cfg: d.Config, store: d.Store, log: d.Log, http: d.HTTP, mail: d.Mail,
+		static: static, brand: brandSet, site: d.Site}
 	s.pages, err = parsePages(s)
 	if err != nil {
 		return nil, err
@@ -75,6 +98,7 @@ func (s *Server) Routes() *router.Router {
 	rt.Handle("GET /static/", access.Public("stylesheets, scripts and fonts"), s.static.Handler())
 	rt.Handle("GET /brand/", access.Public("logo and icons"), s.brand.Handler())
 	rt.HandleFunc("GET /{$}", access.Public("the landing page"), s.home)
+	rt.HandleFunc("GET /privacy", access.Public("the privacy policy"), s.privacy)
 
 	rt.HandleFunc("GET /notes", access.SignedIn(), s.notes)
 	rt.HandleFunc("POST /notes", access.SignedIn(), s.addNote)

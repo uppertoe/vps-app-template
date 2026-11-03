@@ -19,6 +19,7 @@ from playwright.sync_api import sync_playwright
 BASE = (sys.argv[1] if len(sys.argv) > 1 else "http://localhost:8080").rstrip("/")
 PAGES = [
     ("/", None),
+    ("/privacy", None),
     ("/notes", "staff@example.org|user"),
     ("/admin", "staff@example.org|user,starterapp_admin"),
 ]

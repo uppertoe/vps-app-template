@@ -24,8 +24,13 @@ document.addEventListener("alpine:init", () => {
       const box = this.$el.querySelector("textarea, input[type=text]");
       if (box) { this.text = box.value; }
     },
+    // Characters as the server counts them (Unicode code points), so an emoji
+    // counts once, not twice. The server decides; this only informs.
     get remaining() {
-      const left = this.max - this.text.length;
+      const left = this.max - Array.from(this.text).length;
+      if (left < 0) {
+        return -left === 1 ? "1 character over the limit" : -left + " characters over the limit";
+      }
       return left === 1 ? "1 character left" : left + " characters left";
     },
     clear(event) {

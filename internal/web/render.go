@@ -96,14 +96,17 @@ func (s *Server) render(w http.ResponseWriter, r *http.Request, status int, page
 	_, _ = buf.WriteTo(w)
 }
 
-// renderPartial writes one partial, for an htmx response.
-func (s *Server) renderPartial(w http.ResponseWriter, r *http.Request, name string, data any) {
+// renderPartial writes one partial, for an htmx response. A refused form
+// answers 422: htmx (configured in layout.html) still shows the partial, with
+// its error, but reports the request as failed, so the form keeps its text.
+func (s *Server) renderPartial(w http.ResponseWriter, r *http.Request, status int, name string, data any) {
 	var buf bytes.Buffer
 	if err := s.pages.byName["_partials"].ExecuteTemplate(&buf, name, s.newView(r, "", data)); err != nil {
 		s.fail(w, r, err)
 		return
 	}
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	w.WriteHeader(status)
 	_, _ = buf.WriteTo(w)
 }
 

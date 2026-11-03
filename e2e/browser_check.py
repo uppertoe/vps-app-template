@@ -77,6 +77,23 @@ def main():
             problems.append("the form was not cleared after saving")
         if page.url != BASE + "/notes":
             problems.append(f"htmx did not handle the form; the page moved to {page.url}")
+        # A refused note keeps its text and shows why. Spaces pass the
+        # browser's required check, and the server refuses them.
+        before = len(errors)
+        page.fill("#note-body", "   ")
+        page.click("form button[type=submit]")
+        page.wait_for_selector("#note-list .error")
+        # The refusal is a 422 by design; the browser and htmx both log it.
+        # Any other console error during this step still fails the check.
+        errors[before:] = [e for e in errors[before:] if "422" not in e]
+        if page.input_value("#note-body") != "   ":
+            problems.append("a refused note cleared the text box")
+        if "between 1 and 2,000 characters" not in page.inner_text("#note-list .error"):
+            problems.append("a refused note did not say why")
+        # An emoji counts as one character, as the server counts it.
+        page.fill("#note-body", "\U0001F600")
+        if page.inner_text(".hint") != "1999 characters left":
+            problems.append(f"an emoji counted as {page.inner_text('.hint')!r}")
         page.click(".menu-button")
         if not page.is_visible(".menu a[href='/notes']"):
             problems.append("the phone menu does not open")
@@ -87,7 +104,7 @@ def main():
         print("FAIL", line)
     if problems:
         sys.exit(1)
-    print(f"ok: {len(PAGES) * len(WIDTHS)} page views, the htmx form, the counter and the menu")
+    print(f"ok: {len(PAGES) * len(WIDTHS)} page views, the htmx form, a refused note, the counter and the menu")
 
 
 if __name__ == "__main__":

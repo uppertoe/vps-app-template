@@ -101,8 +101,18 @@ func TestAddNote(t *testing.T) {
 	if w := post("plain form", false); w.Code != 303 {
 		t.Fatalf("form add: %d", w.Code)
 	}
-	if w := post("", true); !strings.Contains(w.Body.String(), "between 1 and 2,000 characters") {
-		t.Fatalf("empty note: %s", w.Body.String())
+	// A refused htmx submission answers 422 with the error, so htmx shows it
+	// but does not treat the request as a success (which would clear the form).
+	if w := post("   ", true); w.Code != http.StatusUnprocessableEntity || !strings.Contains(w.Body.String(), "between 1 and 2,000 characters") {
+		t.Fatalf("blank htmx note: %d %s", w.Code, w.Body.String())
+	}
+	// A note of exactly the limit in characters is saved, however many bytes
+	// or UTF-16 units it takes; one more is refused.
+	if w := post(strings.Repeat("😀", 2000), true); w.Code != http.StatusOK {
+		t.Fatalf("2,000 emoji: %d", w.Code)
+	}
+	if w := post(strings.Repeat("😀", 2001), true); w.Code != http.StatusUnprocessableEntity {
+		t.Fatalf("2,001 emoji: %d", w.Code)
 	}
 	// Without JavaScript, a refused note shows the page again with the
 	// error and the typed text, never a redirect that hides the refusal.
@@ -141,5 +151,26 @@ func TestAssetURLsResolve(t *testing.T) {
 		if w.Code != 200 || len(body) == 0 || !strings.Contains(w.Header().Get("Cache-Control"), "immutable") {
 			t.Errorf("%s: %d, %d bytes, %q", u, w.Code, len(body), w.Header().Get("Cache-Control"))
 		}
+	}
+}
+
+// The kit's router caps every request body at 64 KiB before anything parses
+// it; an oversized post is refused and saves nothing.
+func TestOversizedBodyRefused(t *testing.T) {
+	h := newServer(t, Site{})
+	big := strings.Repeat("x", 70<<10)
+	r := httptest.NewRequest("POST", "/notes", strings.NewReader(url.Values{"body": {big}}.Encode()))
+	r.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	r.Header.Set("Origin", origin)
+	r.Header.Set("HX-Request", "true")
+	r.Header.Set(gateway.HeaderEmail, "ann@example.org")
+	r.Header.Set(gateway.HeaderGroups, "user")
+	w := httptest.NewRecorder()
+	h.ServeHTTP(w, r)
+	if w.Code == http.StatusOK {
+		t.Fatalf("an oversized post was accepted")
+	}
+	if strings.Contains(get(h, "/notes", "ann@example.org", "user").Body.String(), "xxxxxxxxxx") {
+		t.Fatal("an oversized note was saved")
 	}
 }

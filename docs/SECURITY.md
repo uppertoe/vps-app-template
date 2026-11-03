@@ -17,6 +17,7 @@ shares, and in the platform's sign-in gateway and Caddy.
 | The app talks only to declared services | `s.http` reaches only `app.yaml`'s hosts, over HTTPS, never an internal address; the server's firewall limits outbound ports | The kit's egress tests; `kitlint` refuses any other HTTP client or dial |
 | Group membership stays in the gateway | The app reads it from each request, or from the gateway's members endpoint at the moment of use | `kitgate` reads a declared group through the app and requires an undeclared one to be refused |
 | The dev sign-in stand-in never ships | It is compiled only with the `dev` tag | CI greps the image for it and requires `/dev/identity` to answer 404 |
+| A request cannot exhaust memory | The kit's router caps every request body at 64 KiB (256 KiB for a webhook) before anything parses it; the server's read and header timeouts bound slow clients | The kit's router and webhook tests; `internal/web` `TestOversizedBodyRefused` |
 | Production settings are strict | `PUBLIC_URL` must be HTTPS except on 127.0.0.1 or localhost; `EMAIL_BACKEND=log` is refused outside local development; placeholder values are refused | `internal/config` tests |
 
 ## What the app must get right itself

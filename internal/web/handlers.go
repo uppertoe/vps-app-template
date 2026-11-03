@@ -58,7 +58,11 @@ func (s *Server) addNote(w http.ResponseWriter, r *http.Request) {
 	}
 	v.Notes = notes
 	if htmx {
-		s.renderPartial(w, r, "note-list", v)
+		status := http.StatusOK
+		if v.Error != "" {
+			status = http.StatusUnprocessableEntity
+		}
+		s.renderPartial(w, r, status, "note-list", v)
 		return
 	}
 	s.render(w, r, http.StatusUnprocessableEntity, "notes.html", "Shared notes", v)

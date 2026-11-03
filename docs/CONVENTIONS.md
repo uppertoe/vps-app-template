@@ -21,8 +21,16 @@ A feature usually touches four places, in this order.
 ## htmx and plain forms
 
 Every form works without JavaScript: give it `method` and `action` as well as
-`hx-post`. The handler answers an htmx request (`HX-Request: true`) with the
-partial, and a plain post with a redirect, as `addNote` does.
+`hx-post`. Follow `addNote`:
+
+- A saved htmx request (`HX-Request: true`) gets the refreshed partial with
+  200; a saved plain post gets a redirect (303).
+- A refused submission gets 422 with the error, as the partial for htmx and
+  as the whole page, with the typed values, for a plain post. htmx is set up
+  in `layout.html` to show a 422's content while treating the request as
+  failed, so a form that clears itself on success keeps the person's text.
+- The server decides what is valid. Browser checks such as `required` only
+  save a round trip; never rely on them.
 
 ## Times and text
 

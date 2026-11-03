@@ -1,0 +1,20 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended", "helpers:pinGitHubActionDigests"],
+  "minimumReleaseAge": "3 days",
+  "postUpdateOptions": ["gomodTidy"],
+  "packageRules": [
+    {
+      "description": "Kit patch releases merge on their own once CI passes.",
+      "matchPackageNames": ["github.com/uppertoe/vps-app-kit"],
+      "matchUpdateTypes": ["patch"],
+      "automerge": true
+    },
+    {
+      "description": "Kit minor and major releases, and the reusable workflow, are merged by a person.",
+      "matchPackageNames": ["github.com/uppertoe/vps-app-kit", "uppertoe/vps-app-kit"],
+      "matchUpdateTypes": ["minor", "major", "digest"],
+      "automerge": false
+    }
+  ]
+}

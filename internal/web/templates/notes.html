@@ -1,0 +1,11 @@
+{{define "content"}}
+<h1>Notes</h1>
+<form class="card" method="post" action="/notes" hx-post="/notes" hx-target="#note-list" hx-swap="outerHTML"
+      x-data="counter" data-max="{{.Data.MaxLength}}" x-on:htmx:after-request="clear">
+  <label for="note-body">New note</label>
+  <textarea id="note-body" name="body" rows="3" required maxlength="{{.Data.MaxLength}}" x-model="text"></textarea>
+  <p class="hint" x-text="remaining"></p>
+  <button type="submit" class="button">Save the note</button>
+</form>
+{{template "note-list" .}}
+{{end}}

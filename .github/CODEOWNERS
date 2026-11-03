@@ -1,0 +1,5 @@
+# The owner approves changes to the app's declared data class, its
+# connections and its compliance record.
+/app.yaml      @uppertoe
+/compliance/   @uppertoe
+/.github/      @uppertoe

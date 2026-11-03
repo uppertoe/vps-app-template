@@ -1,0 +1,41 @@
+{{define "layout"}}<!doctype html>
+<html lang="en-AU">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{if .Title}}{{.Title}} – {{end}}{{.Site.Title}}</title>
+<meta name="htmx-config" content='{"allowEval":false,"allowScriptTags":false,"selfRequestsOnly":true,"historyCacheSize":0,"includeIndicatorStyles":false,"refreshOnHistoryMiss":true}'>
+<link rel="icon" href="{{brand "icon-32.png"}}" sizes="32x32">
+<link rel="icon" href="{{brand "icon.svg"}}" type="image/svg+xml">
+<link rel="apple-touch-icon" href="{{brand "icon-180.png"}}">
+<link rel="stylesheet" href="{{brand "brand.css"}}">
+<link rel="stylesheet" href="{{asset "app.css"}}">
+<script src="{{asset "js/app.js"}}" defer></script>
+<script src="{{asset "js/vendor/htmx.min.js"}}" defer></script>
+<script src="{{asset "js/vendor/alpine-csp.min.js"}}" defer></script>
+</head>
+<body>
+{{if .Site.HealthUnattested}}
+<div class="banner" role="alert">This is a prototype. It is not approved to hold real patient information, so please do not enter any.</div>
+{{end}}
+<header class="masthead">
+  <a class="masthead-name" href="/"><img src="{{brand "logo.svg"}}" alt="" width="28" height="28"> {{.Site.Title}}</a>
+  {{if .SignedIn}}
+  <nav class="masthead-nav" x-data="menu">
+    <button type="button" class="menu-button" x-on:click="toggle" x-bind:aria-expanded="expanded">Menu</button>
+    <ul class="menu" x-bind:class="menuClass">
+      <li><a href="/notes">Notes</a></li>
+      {{if .Identity.InGroup .Site.AdminGroup}}<li><a href="/admin">Administration</a></li>{{end}}
+      <li><a href="{{.Site.AuthURL}}/logout">Sign out</a></li>
+    </ul>
+  </nav>
+  {{end}}
+</header>
+<main class="page">
+{{template "content" .}}
+</main>
+<footer class="footer">
+  <p>{{.Site.Organisation}}. For help, you can contact <a href="mailto:{{.Site.ContactEmail}}">{{.Site.ContactEmail}}</a>.</p>
+</footer>
+</body>
+</html>{{end}}

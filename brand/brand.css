@@ -1,0 +1,25 @@
+/* Brand tokens. Change the values here; the rest of the app reads them.
+   Colours must keep a contrast ratio of at least 4.5:1 for text. */
+:root {
+  --brand-accent: #2f5d8a;
+  --brand-accent-ink: #ffffff;
+  --brand-ground: #f7f8fa;
+  --brand-surface: #ffffff;
+  --brand-ink: #1c232b;
+  --brand-muted: #5a6572;
+  --brand-rule: #d9dee4;
+  --brand-font-body: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --brand-font-heading: var(--brand-font-body);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --brand-accent: #8fb8e0;
+    --brand-accent-ink: #0d1620;
+    --brand-ground: #12161b;
+    --brand-surface: #1a2027;
+    --brand-ink: #e6e9ed;
+    --brand-muted: #9aa5b1;
+    --brand-rule: #2c343d;
+  }
+}

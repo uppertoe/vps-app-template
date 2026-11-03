@@ -1,0 +1,12 @@
+.git
+.github
+data
+bin
+e2e
+testdata
+docs
+design-docs
+deploy
+**/*_test.go
+.env
+*.db

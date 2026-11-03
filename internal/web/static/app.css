@@ -1,0 +1,110 @@
+/* The app's styles. Colours and fonts come from brand/brand.css; change
+   them there. The CSP allows no style attributes and no <style> blocks, so
+   every rule lives in this file. */
+*, *::before, *::after { box-sizing: border-box; }
+html { color-scheme: light dark; }
+body {
+  margin: 0;
+  background: var(--brand-ground);
+  color: var(--brand-ink);
+  font: 16px/1.55 var(--brand-font-body);
+}
+h1, h2, h3 { font-family: var(--brand-font-heading); line-height: 1.2; }
+a { color: var(--brand-accent); }
+
+.banner {
+  background: #8a2f2f;
+  color: #fff;
+  padding: 0.6rem 1rem;
+  text-align: center;
+  font-weight: 600;
+}
+
+.masthead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.75rem 1rem;
+  background: var(--brand-surface);
+  border-bottom: 1px solid var(--brand-rule);
+}
+.masthead-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: inherit;
+  font-weight: 600;
+  text-decoration: none;
+}
+.menu { display: flex; gap: 1.25rem; list-style: none; margin: 0; padding: 0; }
+.menu-button { display: none; }
+
+.page { max-width: 46rem; margin: 0 auto; padding: 1.5rem 1rem 3rem; }
+.lede { font-size: 1.15rem; color: var(--brand-muted); }
+.hint { color: var(--brand-muted); font-size: 0.9rem; margin: 0.25rem 0 0; }
+.error { color: #b3261e; font-weight: 600; }
+
+.card {
+  background: var(--brand-surface);
+  border: 1px solid var(--brand-rule);
+  border-radius: 8px;
+  padding: 1rem;
+  margin: 0 0 1rem;
+}
+.notes { list-style: none; margin: 1.5rem 0 0; padding: 0; }
+.notes p { margin: 0; white-space: pre-wrap; }
+
+label { display: block; font-weight: 600; margin-bottom: 0.35rem; }
+textarea {
+  width: 100%;
+  font: inherit;
+  padding: 0.5rem;
+  border: 1px solid var(--brand-rule);
+  border-radius: 6px;
+  background: var(--brand-ground);
+  color: inherit;
+}
+.button {
+  display: inline-block;
+  margin-top: 0.75rem;
+  padding: 0.55rem 1rem;
+  border: 0;
+  border-radius: 6px;
+  background: var(--brand-accent);
+  color: var(--brand-accent-ink);
+  font: inherit;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.footer { color: var(--brand-muted); font-size: 0.9rem; text-align: center; padding: 2rem 1rem; }
+
+@media (max-width: 640px) {
+  .menu-button {
+    display: inline-block;
+    font: inherit;
+    padding: 0.35rem 0.75rem;
+    border: 1px solid var(--brand-rule);
+    border-radius: 6px;
+    background: transparent;
+    color: inherit;
+  }
+  .masthead { flex-wrap: wrap; }
+  .masthead-nav { position: relative; }
+  .menu {
+    display: none;
+    position: absolute;
+    right: 0;
+    top: 2.5rem;
+    flex-direction: column;
+    gap: 0.75rem;
+    min-width: 12rem;
+    padding: 1rem;
+    background: var(--brand-surface);
+    border: 1px solid var(--brand-rule);
+    border-radius: 8px;
+  }
+  .menu.is-open { display: flex; }
+}

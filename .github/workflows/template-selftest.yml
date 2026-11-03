@@ -1,0 +1,63 @@
+# The template's own tests. scripts/init.sh deletes this file from every app,
+# because these jobs test the template rather than an app.
+name: Template self-test
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    # Weekly, against the newest kit, so a kit release that breaks the
+    # template is found before an author meets it.
+    - cron: "17 21 * * 0"
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  unsafe:
+    name: Known-bad variants are caught
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+      - name: Use the newest kit on the weekly run
+        if: github.event_name == 'schedule'
+        run: go get github.com/uppertoe/vps-app-kit@latest && go mod tidy
+      - run: testdata/run-unsafe.sh
+
+  browser:
+    name: Pages work in a browser under the CSP
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+      - name: Use the newest kit on the weekly run
+        if: github.event_name == 'schedule'
+        run: go get github.com/uppertoe/vps-app-kit@latest && go mod tidy
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.13"
+      - name: Install Playwright
+        run: |
+          pip install playwright==1.64.1
+          python -m playwright install --with-deps chromium
+      - name: Start the app with the dev stand-in
+        run: |
+          make run > run.log 2>&1 &
+          for _ in $(seq 1 90); do curl -sf http://127.0.0.1:8080/healthz && break; sleep 1; done
+      - run: python e2e/browser_check.py http://127.0.0.1:8080
+      - name: App log
+        if: always()
+        run: tail -50 run.log

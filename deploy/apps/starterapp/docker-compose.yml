@@ -1,0 +1,36 @@
+# Copy this folder to apps/starterapp/ in the server repo. The server repo
+# pins the image by digest (Renovate keeps the pin current); the tag here
+# names the commit CI built.
+services:
+  starterapp:
+    image: ghcr.io/OWNER/REPO:sha-COMMIT
+    restart: unless-stopped
+    # CIS Docker section 5 hardening. The audit and CI check every line.
+    user: "65532:65532"
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp
+    env_file:
+      - path: ./.env
+        required: true
+    volumes:
+      - starterapp_data:/data
+    # A person waits on this app, so it does not swap (see the scaffold's
+    # docs/04-server-repo.md). Raise the limit only after measuring.
+    cgroup_parent: vps-noswap.slice
+    mem_limit: 128m
+    pids_limit: 128
+    healthcheck:
+      test: ["CMD", "/app", "-healthcheck"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    # No ports: Caddy reaches the app on its generated proxy network.
+
+volumes:
+  starterapp_data:

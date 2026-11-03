@@ -1,0 +1,4 @@
+# The organisation the app belongs to, shown in the footer.
+organisation: Your organisation
+# Where people can ask about the app, shown in the footer and on error pages.
+contact_email: contact@example.org

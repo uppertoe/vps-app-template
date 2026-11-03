@@ -1,0 +1,14 @@
+{{define "note-list"}}
+<section id="note-list" aria-live="polite">
+  {{with .Data.Error}}<p class="error" role="alert">{{.}}</p>{{end}}
+  {{if .Data.Notes}}
+  <ul class="notes">
+    {{range .Data.Notes}}
+    <li class="card"><p>{{.Body}}</p><p class="hint">Saved {{date .CreatedAt}}</p></li>
+    {{end}}
+  </ul>
+  {{else}}
+  <p class="hint">No notes have been saved yet.</p>
+  {{end}}
+</section>
+{{end}}

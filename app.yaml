@@ -1,0 +1,36 @@
+# The app's manifest. The kit reads it at start-up and CI reads it on every
+# run. List every outside service the app talks to here: the app's HTTP
+# client refuses any host that is not listed, and design-docs/connections.md
+# is generated from this file (make generate).
+
+# The folder and service name under apps/ in the server repo.
+name: starterapp
+# The app's name as people see it.
+title: Starter app
+# The site is served at <subdomain>.<the server's domain>.
+subdomain: starter
+port: 8080
+
+# The most sensitive information the app holds: none, personal or health.
+# A health app shows a warning banner on every page until the file named in
+# health_attestation exists; see compliance/README.md.
+data_class: none
+health_attestation: compliance/health-attestation.md
+
+# Outside HTTPS services. Each needs a host, what it is for, and what
+# information it receives. For example:
+#
+# outbound:
+#   - host: api.anthropic.com
+#     purpose: Drafts a summary of each note
+#     data: The note's text
+outbound: []
+
+# Uncomment when the app sends email through SES.
+# email:
+#   smtp_host: email-smtp.ap-southeast-2.amazonaws.com
+#   purpose: Tells staff when a note is added
+#   data: The note's title and a link to it
+
+# Services that send the app signed deliveries (see the kit's webhook package).
+webhooks: []

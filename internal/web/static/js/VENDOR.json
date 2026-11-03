@@ -1,0 +1,21 @@
+{
+  "comment": "Each vendored file, its exact version, where it came from and its SHA-256 (base64, as jsDelivr publishes it). CI checks each file against its hash, and downloads any changed file again to compare it with the registry. Update with make vendor.",
+  "files": [
+    {
+      "path": "vendor/htmx.min.js",
+      "package": "htmx.org",
+      "version": "2.0.11",
+      "file": "/dist/htmx.min.js",
+      "url": "https://cdn.jsdelivr.net/npm/htmx.org@2.0.11/dist/htmx.min.js",
+      "sha256": "1v3HXyBOa976mbab8ebUrGm4o2T3eSn0XBNHa0AA9xc="
+    },
+    {
+      "path": "vendor/alpine-csp.min.js",
+      "package": "@alpinejs/csp",
+      "version": "3.17.5",
+      "file": "/dist/cdn.min.js",
+      "url": "https://cdn.jsdelivr.net/npm/@alpinejs/csp@3.17.5/dist/cdn.min.js",
+      "sha256": "SMFwySAy5SfLrnG4znXPH5bKBvqGmmEg7w/kONjpLDY="
+    }
+  ]
+}

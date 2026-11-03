@@ -1,0 +1,18 @@
+name: CI
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions: {}
+
+jobs:
+  ci:
+    # The platform's checks, container probe and image publishing. Renovate
+    # proposes updates to this pin; a person merges them.
+    uses: uppertoe/vps-app-kit/.github/workflows/app-ci.yml@ec8da9f82ab247362a70c322bb536b8f6ceb06ee
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+      attestations: write

@@ -1,0 +1,51 @@
+# Generated from the app's route list by vps-app-kit. Do not edit:
+# change the routes in the app, then run make caddy.
+# Keep comments free of braces: the server's route renderer counts them.
+starter.{$DOMAIN} {
+	# GET /healthz: public (container health check)
+	@r1 path /healthz
+	handle @r1 {
+		# scaffold-lint: public -- container health check
+		reverse_proxy starterapp:8080 {
+			import strip_public
+		}
+	}
+	# GET /admin: group starterapp_admin
+	@r2 path /admin
+	handle @r2 {
+		import protected_groups "starterapp_admin" starterapp:8080
+	}
+	# GET /notes, POST /notes: signed in
+	@r3 path /notes
+	handle @r3 {
+		import protected starterapp:8080
+	}
+	# GET /<$>: public (the landing page)
+	@r4 path /
+	handle @r4 {
+		# scaffold-lint: public -- the landing page
+		reverse_proxy starterapp:8080 {
+			import strip_public
+		}
+	}
+	# GET /static/: public (stylesheets, scripts and fonts)
+	@r5 path /static /static/*
+	handle @r5 {
+		# scaffold-lint: public -- stylesheets, scripts and fonts
+		reverse_proxy starterapp:8080 {
+			import strip_public
+		}
+	}
+	# GET /brand/: public (logo and icons)
+	@r6 path /brand /brand/*
+	handle @r6 {
+		# scaffold-lint: public -- logo and icons
+		reverse_proxy starterapp:8080 {
+			import strip_public
+		}
+	}
+	# Any path the app did not register.
+	handle {
+		respond 404
+	}
+}

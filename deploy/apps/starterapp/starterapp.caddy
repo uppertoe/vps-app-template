@@ -1,5 +1,5 @@
 # Generated from the app's route list by vps-app-kit. Do not edit:
-# change the routes in the app, then run make caddy.
+# change the routes in the app, then run make generate.
 # Keep comments free of braces: the server's route renderer counts them.
 starter.{$DOMAIN} {
 	# GET /healthz: public (container health check)

@@ -88,9 +88,15 @@ the usual changes; follow the nearest one.
   its purpose and the information it receives. Run `make generate` to update
   the design docs.
 - Call it only through `s.http`, the server's client, which reaches only the
-  hosts in `app.yaml`. Never use `http.Get`, `http.DefaultClient`, a new
-  `http.Client`, `net.Dial` or an SDK built with its own client: `make lint`
-  fails on each.
+  hosts in `app.yaml`. Never use `http.Get` and its siblings,
+  `http.DefaultClient`, an `http.Client` value or `new(http.Client)`,
+  `http.Transport`, `net.Dial`, `httputil` proxies or `net/smtp`: `make lint`
+  fails on each. Hold only the `*http.Client` you are given.
+- Every third-party library goes under `libraries` in `app.yaml` with what it
+  is for, and `make lint` fails on one that is missing. Before adding one,
+  check whether the standard library or the kit already does the job. If a
+  library makes its own network connections, give it `s.http`; if it cannot
+  take one, ask the owner before using it.
 - Send email only through `s.mail`, and declare it under `email` in
   `app.yaml`. A service that sends the app deliveries uses an
   `access.Webhook` route and the kit's `webhook` package. `docs/RECIPES.md`
@@ -98,7 +104,8 @@ the usual changes; follow the nearest one.
 - Secrets live in `.env` on the server, never in code, `app.yaml`, the design
   docs or a commit. Add the setting's name to
   `deploy/apps/starterapp/.env.example` with the value `CHANGE_ME`.
-- Never run other programs (`os/exec`).
+- Never run other programs (`os/exec`, `os.StartProcess`) or load code at run
+  time (`plugin`).
 
 ## Logging
 

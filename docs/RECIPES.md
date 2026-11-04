@@ -274,8 +274,10 @@ An API key goes in the server's `.env`, never in code: add
 it in `internal/config/config.go`, and send it as a header on the request.
 Run `make generate` to update the connections page in the design docs.
 
-If a library wants an `*http.Client`, give it `s.http`. A library that makes
-its own client is refused by `make lint`.
+If a library wants an `*http.Client`, give it `s.http`. Declare every
+third-party library under `libraries` in `app.yaml`, with what it is for;
+`make lint` fails on an undeclared one. A library that makes its own
+connections and cannot take `s.http` is a question for the platform owner.
 
 To test code that calls an outside service, hide the call behind a function
 or interface field on the server, set from `Deps`, and give tests a fake.

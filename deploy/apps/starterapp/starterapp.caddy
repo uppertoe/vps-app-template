@@ -5,7 +5,7 @@ starter.{$DOMAIN} {
 	# GET /healthz: public (container health check)
 	@r1 path /healthz
 	handle @r1 {
-		# scaffold-lint: public -- container health check
+		# scaffold-lint: open-path -- /healthz: container health check
 		reverse_proxy starterapp:8080 {
 			import strip_public
 		}
@@ -13,7 +13,7 @@ starter.{$DOMAIN} {
 	# GET /privacy: public (the privacy policy)
 	@r2 path /privacy
 	handle @r2 {
-		# scaffold-lint: public -- the privacy policy
+		# scaffold-lint: open-path -- /privacy: the privacy policy
 		reverse_proxy starterapp:8080 {
 			import strip_public
 		}
@@ -31,7 +31,7 @@ starter.{$DOMAIN} {
 	# GET /<$>: public (the landing page)
 	@r5 path /
 	handle @r5 {
-		# scaffold-lint: public -- the landing page
+		# scaffold-lint: open-path -- /: the landing page
 		reverse_proxy starterapp:8080 {
 			import strip_public
 		}
@@ -39,7 +39,7 @@ starter.{$DOMAIN} {
 	# GET /static/: public (stylesheets, scripts and fonts)
 	@r6 path /static /static/*
 	handle @r6 {
-		# scaffold-lint: public -- stylesheets, scripts and fonts
+		# scaffold-lint: open-path -- /static /static/*: stylesheets, scripts and fonts
 		reverse_proxy starterapp:8080 {
 			import strip_public
 		}
@@ -47,13 +47,14 @@ starter.{$DOMAIN} {
 	# GET /brand/: public (logo and icons)
 	@r7 path /brand /brand/*
 	handle @r7 {
-		# scaffold-lint: public -- logo and icons
+		# scaffold-lint: open-path -- /brand /brand/*: logo and icons
 		reverse_proxy starterapp:8080 {
 			import strip_public
 		}
 	}
 	# Any path the app did not register.
 	handle {
+		# scaffold-lint: open-path -- every other path: answered 404 by Caddy, nothing reaches the app
 		respond 404
 	}
 }

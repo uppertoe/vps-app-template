@@ -39,3 +39,11 @@ webhooks: []
 # as for a weekly email to a group (see docs/RECIPES.md). The server gives
 # the app a private network to the gateway only when this list is not empty.
 members: []
+
+# Every third-party Go module the app requires directly (go.mod, not marked
+# indirect), other than vps-app-kit, with what it is for. make lint fails on
+# an undeclared one, so a library that brings its own network client or runs
+# programs is seen in review. Prefer the standard library and the kit.
+libraries:
+  - module: gopkg.in/yaml.v3
+    purpose: Reads brand/brand.yaml

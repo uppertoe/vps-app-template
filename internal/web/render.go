@@ -99,6 +99,10 @@ func (s *Server) render(w http.ResponseWriter, r *http.Request, status int, page
 // renderPartial writes one partial, for an htmx response. A refused form
 // answers 422: htmx (configured in layout.html) still shows the partial, with
 // its error, but reports the request as failed, so the form keeps its text.
+// The starter's notes are its only caller; an app that removes them keeps it
+// for its own htmx responses (docs/CONVENTIONS.md).
+//
+//lint:ignore U1000 kept for htmx responses after the starter's notes are removed
 func (s *Server) renderPartial(w http.ResponseWriter, r *http.Request, status int, name string, data any) {
 	var buf bytes.Buffer
 	if err := s.pages.byName["_partials"].ExecuteTemplate(&buf, name, s.newView(r, "", data)); err != nil {

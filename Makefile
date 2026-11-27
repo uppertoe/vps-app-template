@@ -17,8 +17,17 @@ test:
 	go vet ./...
 	go test ./...
 
-# The platform's checks on this app's code and templates.
+# The same checks CI runs, so that a push which passes here passes there:
+# formatting, staticcheck, known vulnerabilities, and the platform's checks
+# on the code and templates. The two tool versions match the kit's CI
+# workflow (app-ci.yml); change them together. Each tool is built with the
+# Go the app is checked with, as CI does, or it misreads the standard library.
+STATICCHECK := honnef.co/go/tools/cmd/staticcheck@v0.8.2
+GOVULNCHECK := golang.org/x/vuln/cmd/govulncheck@v1.9.0
 lint:
+	@test -z "$$(gofmt -l .)" || { gofmt -l .; echo "Run gofmt -w ." >&2; exit 1; }
+	GOTOOLCHAIN=$$(go env GOVERSION) go run $(STATICCHECK) ./...
+	GOTOOLCHAIN=$$(go env GOVERSION) go run $(GOVULNCHECK) ./...
 	go run $(KIT)/cmd/kitlint@$(KIT_VERSION) all .
 
 # Regenerate the files built from the code and the manifest. Commit the

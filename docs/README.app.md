@@ -42,7 +42,7 @@ on it; otherwise ask the platform owner to add it to the update bot.
 |---|---|
 | `make run` | Runs the app locally with the dev sign-in stand-in |
 | `make test` | Vets and tests the code |
-| `make lint` | Runs the platform's checks |
+| `make lint` | Runs CI's checks: formatting, staticcheck, govulncheck and the platform's checks |
 | `make generate` | Regenerates the Caddy snippet and the connections page |
 | `make image` | Builds the container image |
 

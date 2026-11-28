@@ -12,7 +12,8 @@
 #
 # For CI and scripted use, every answer can be given as a flag:
 #   scripts/init.sh --name rota --title "Rota" --subdomain rota \
-#     --module github.com/acme/rota --owner acme --repo rota --data-class none --yes
+#     --module github.com/acme/rota --owner acme --repo rota --codeowner jsmith \
+#     --data-class none --yes
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
@@ -22,7 +23,7 @@ if [[ ! -f app.yaml ]] || ! grep -q '^name: starterapp$' app.yaml; then
   exit 1
 fi
 
-name="" title="" subdomain="" module="" owner="" repo="" data_class="" contact="" contact_email="" organisation="" yes=0
+name="" title="" subdomain="" module="" owner="" repo="" codeowner="" data_class="" contact="" contact_email="" organisation="" yes=0
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --name) name="$2"; shift 2 ;;
@@ -31,6 +32,7 @@ while [[ $# -gt 0 ]]; do
     --module) module="$2"; shift 2 ;;
     --owner) owner="$2"; shift 2 ;;
     --repo) repo="$2"; shift 2 ;;
+    --codeowner) codeowner="$2"; shift 2 ;;
     --data-class) data_class="$2"; shift 2 ;;
     --contact) contact="$2"; shift 2 ;;
     --contact-email) contact_email="$2"; shift 2 ;;
@@ -64,6 +66,16 @@ ask name "App name, used for the folder and service in the server repo (lower ca
 ask title "The app's name as people see it" ""
 ask subdomain "Subdomain the app is served at" "$name"
 ask module "Go module path" "github.com/$owner/$repo"
+# CODEOWNERS accepts a person or a team, never an organisation, so a
+# repository under an organisation names the person who approves changes to
+# the app's data class, connections and compliance record.
+owner_type=""
+if command -v gh >/dev/null 2>&1; then
+  owner_type="$(gh api "users/$owner" --jq .type 2>/dev/null || true)"
+fi
+codeowner_default=""
+[[ "$owner_type" == "User" ]] && codeowner_default="$owner"
+ask codeowner "GitHub username of the person who approves changes to app.yaml and compliance/" "$codeowner_default"
 ask data_class "Most sensitive information the app will hold: none, personal or health" "none"
 ask contact "Your name, as the app's contact in its design docs" ""
 ask contact_email "The address people should write to about the app" ""
@@ -75,15 +87,19 @@ fail() { echo "init.sh: $*" >&2; exit 1; }
 [[ -n "$title" && "$title" != *$'\n'* && "$title" != *'"'* ]] || fail "the title is required and must be one line without quotes"
 [[ "$module" =~ ^[a-z0-9.-]+(/[A-Za-z0-9._-]+)+$ ]] || fail "the module path must look like github.com/owner/repo"
 [[ "$owner" =~ ^[A-Za-z0-9-]+$ && "$repo" =~ ^[A-Za-z0-9._-]+$ ]] || fail "the GitHub owner and repository are required"
+[[ "$codeowner" =~ ^[A-Za-z0-9-]+$ ]] || fail "the GitHub username of the person who approves changes is required (--codeowner)"
+if command -v gh >/dev/null 2>&1; then
+  codeowner_type="$(gh api "users/$codeowner" --jq .type 2>/dev/null || true)"
+  [[ -z "$codeowner_type" || "$codeowner_type" == "User" ]] || fail "$codeowner is an organisation; CODEOWNERS needs a person's GitHub username"
+fi
 case "$data_class" in none|personal|health) ;; *) fail "the data class must be none, personal or health" ;; esac
 oneline() { [[ -n "$1" && "$1" != *'"'* && "$1" != *:* && "$1" != *$'\n'* ]]; }
 oneline "$contact" || fail "your name is required, on one line without quotes or colons"
 [[ "$contact_email" =~ ^[^@[:space:]]+@[^@[:space:]]+\.[^@[:space:]]+$ ]] || fail "the contact address must be an email address"
 oneline "$organisation" || fail "the organisation is required, on one line without quotes or colons"
-# Groups take the app's name with underscores, so every group the app
-# defines (starterapp_admin, starterapp_reports in the recipes) is renamed.
+# Names that take the app's name with underscores, such as the data volume
+# and the member groups in the recipes, are renamed.
 prefix="${name//-/_}"
-group="${prefix}_admin"
 
 if [[ $yes -ne 1 ]]; then
   echo
@@ -93,7 +109,7 @@ if [[ $yes -ne 1 ]]; then
   echo "  Address:     $subdomain.<the server's domain>"
   echo "  Module:      $module"
   echo "  Image:       ghcr.io/$(lc "$owner")/$(lc "$repo")"
-  echo "  Admin group: $group"
+  echo "  Approver:    @$codeowner (CODEOWNERS)"
   echo "  Data class:  $data_class"
   echo "  Contact:     $contact <$contact_email>, $organisation"
   read -r -p "Continue? [y/N] " ok
@@ -127,8 +143,8 @@ perl -pi -e 's{^contact: Your name$}{contact: $ENV{CONTACT}}; s{^decided-by: You
 perl -pi -e 's{^organisation: .*$}{organisation: $ENV{ORGANISATION}}; s{^contact_email: .*$}{contact_email: $ENV{CONTACT_EMAIL}}' brand/brand.yaml
 # The app's README replaces the template's, which describes starting an app.
 mv docs/README.app.md README.md
-# The template's owner is replaced by yours, in CODEOWNERS only.
-perl -pi -e 's{\@uppertoe\b}{\@$ENV{OWNER}}g' .github/CODEOWNERS
+# The template's approver is replaced by yours, in CODEOWNERS only.
+CODEOWNER="$codeowner" perl -pi -e 's{\@uppertoe\b}{\@$ENV{CODEOWNER}}g' .github/CODEOWNERS
 
 mv deploy/apps/starterapp "deploy/apps/$name"
 mv "deploy/apps/$name/starterapp.caddy" "deploy/apps/$name/$name.caddy"

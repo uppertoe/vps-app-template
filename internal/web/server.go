@@ -23,9 +23,9 @@ import (
 //go:embed static all:templates
 var embedded embed.FS
 
-// AdminGroup is the gateway group whose members see the admin pages. An
-// administrator adds people to it on the gateway's Groups page.
-const AdminGroup = "starterapp_admin"
+// AdminRole is the app role that opens the admin pages. It is declared under
+// roles in app.yaml, and the gateway's admin pages decide who holds it.
+const AdminRole = "admin"
 
 // Deps are what the server is built from. main.go fills every field.
 type Deps struct {
@@ -66,7 +66,7 @@ type Site struct {
 	ContactEmail     string
 	HealthUnattested bool
 	AuthURL          string
-	AdminGroup       string
+	AdminRole        string
 	// DataClass is app.yaml's data_class: none, personal or health.
 	DataClass string
 }
@@ -86,7 +86,7 @@ func New(d Deps) (*Server, error) {
 	if d.Log == nil {
 		d.Log = slog.Default()
 	}
-	d.Site.AdminGroup = AdminGroup
+	d.Site.AdminRole = AdminRole
 	s := &Server{cfg: d.Config, store: d.Store, log: d.Log, http: d.HTTP, mail: d.Mail, members: d.Members,
 		static: static, brand: brandSet, site: d.Site}
 	s.pages, err = parsePages(s)
@@ -106,10 +106,10 @@ func (s *Server) Routes() *router.Router {
 	rt.HandleFunc("GET /{$}", access.Public("the landing page"), s.home)
 	rt.HandleFunc("GET /privacy", access.Public("the privacy policy"), s.privacy)
 
-	rt.HandleFunc("GET /notes", access.SignedIn(), s.notes)
-	rt.HandleFunc("POST /notes", access.SignedIn(), s.addNote)
+	rt.HandleFunc("GET /notes", access.Role("user"), s.notes)
+	rt.HandleFunc("POST /notes", access.Role("user"), s.addNote)
 
-	rt.HandleFunc("GET /admin", access.Group(AdminGroup), s.admin)
+	rt.HandleFunc("GET /admin", access.Role(AdminRole), s.admin)
 
 	return rt
 }

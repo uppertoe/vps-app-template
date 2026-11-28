@@ -84,7 +84,12 @@ func main() {
 			fmt.Print(rt.Table())
 			return
 		}
-		out, err := rt.Caddy(router.Site{Name: m.Name, Host: m.SiteHost(), Port: m.Port, MemberGroups: m.Members})
+		roles := make([]router.RoleDecl, 0, len(m.Roles))
+		for _, r := range m.Roles {
+			roles = append(roles, router.RoleDecl{Name: r.Name, Label: r.Label})
+		}
+		out, err := rt.Caddy(router.Site{Name: m.Name, Host: m.SiteHost(), Port: m.Port,
+			MemberGroups: m.Members, Label: m.Title, Roles: roles})
 		if err != nil {
 			fatal(err)
 		}

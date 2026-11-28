@@ -25,7 +25,8 @@ page sets out what each of you does.
 5. **Send the platform owner a short note** with the repository's address,
    the address the app should be served at, any settings it needs in its
    `.env` (the names from `deploy/apps/<name>/.env.example`, never the
-   values), and which people should be in its groups.
+   values), and who should hold each of its roles, such as "the user role
+   for everyone at rch.org.au, and the admin role for me".
 
 Never send a secret by email or chat. Settings such as API keys are entered
 on the server by the platform owner, or handed over in person.
@@ -50,16 +51,16 @@ These steps run in the server repo, as the scaffold's
    each new digest of the `main` tag, and CI in the server repo checks it.
 4. **Settings.** Copy `.env.example` to `apps/<name>/.env` on the server and
    fill it in. `PUBLIC_URL` is the app's address.
-5. **Groups.** Create the groups the app's routes use on the sign-in
-   service's Groups page (it lists them once the routes are rendered), and
-   add the people.
+5. **Roles.** Once the app is deployed, the sign-in service's admin pages
+   list it with the roles from its snippet. Give each role to the people the
+   author named: a domain group, a list or named people.
 6. **Group members.** If `app.yaml` lists groups under `members`, the
    app reads those groups' members from the gateway. Add the app to
    `MEMBER_READERS` in `apps/auth/.env` (`<name>=<group>,<group>`), set
    `MEMBER_READER_TOKEN_<NAME>` there to a new token
    (`openssl rand -hex 32`; the name upper-cased, with `-` as `_`), and put
    the same token in the app's `.env` as `GATEWAY_MEMBERS_TOKEN`, with
-   `GATEWAY_MEMBERS_URL=http://auth:8081`. The route renderer gives the app
+   `GATEWAY_MEMBERS_URL=http://auth-members:8081`. The route renderer gives the app
    a private network to the gateway from the `scaffold-members` line in its
    `.caddy` file; never add the app to `auth_proxy`, and never publish port
    8081. After deploying, `docker compose exec <name> /app -members <group>`

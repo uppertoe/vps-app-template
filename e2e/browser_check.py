@@ -21,16 +21,16 @@ PAGES = [
     ("/", None),
     ("/privacy", None),
     ("/notes", "staff@example.org|user"),
-    ("/admin", "staff@example.org|user,starterapp_admin"),
+    ("/admin", "staff@example.org|user,admin"),
 ]
 WIDTHS = [1280, 390]
 
 
 def sign_in(page, identity):
-    email, groups = identity.split("|")
+    email, roles = identity.split("|")
     page.goto(BASE + "/dev/identity")
     page.fill("input[name=email]", email)
-    page.fill("input[name=groups]", groups)
+    page.fill("input[name=roles]", roles)
     page.click("form button")
 
 

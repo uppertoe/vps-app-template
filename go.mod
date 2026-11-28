@@ -5,7 +5,7 @@ go 1.26.0
 toolchain go1.27.4
 
 require (
-	github.com/uppertoe/vps-app-kit v0.7.0
+	github.com/uppertoe/vps-app-kit v0.8.0
 	gopkg.in/yaml.v3 v3.0.1
 )
 

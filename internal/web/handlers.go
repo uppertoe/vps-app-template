@@ -70,7 +70,7 @@ func (s *Server) addNote(w http.ResponseWriter, r *http.Request) {
 
 type adminView struct {
 	NoteCount int
-	Group     string
+	Role      string
 }
 
 func (s *Server) admin(w http.ResponseWriter, r *http.Request) {
@@ -79,5 +79,5 @@ func (s *Server) admin(w http.ResponseWriter, r *http.Request) {
 		s.fail(w, r, err)
 		return
 	}
-	s.render(w, r, http.StatusOK, "admin.html", "Administration", adminView{NoteCount: n, Group: AdminGroup})
+	s.render(w, r, http.StatusOK, "admin.html", "Administration", adminView{NoteCount: n, Role: "Administrator"})
 }

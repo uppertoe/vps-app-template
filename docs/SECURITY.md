@@ -26,9 +26,10 @@ The kit cannot know which records belong to whom. The starter's notes are
 deliberately shared with everyone who can sign in, and the page says so. A
 record that belongs to one person must store its owner from the gateway's
 identity and name the owner in every query, as `docs/RECIPES.md` shows, with
-a test that one person cannot reach another's records. On a shared server
-the gateway may admit people from more than one organisation, so a page for
-one organisation's staff uses `access.Domain`, not `access.SignedIn`.
+a test that one person cannot reach another's records. Who holds each role
+is decided on the sign-in service's admin pages, so a page for one
+organisation's staff relies on the user role being given to that
+organisation's domain there.
 
 ## Health information
 

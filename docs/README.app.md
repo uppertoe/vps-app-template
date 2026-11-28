@@ -16,8 +16,8 @@ Python with Playwright only to run the browser check.
 
 - Run the app with `make run`, then open
   `http://127.0.0.1:8080/dev/identity` and choose who you are signed in as.
-  The role comes first (`user` or `admin`), then any groups, such as
-  `user,starterapp_admin`. This stand-in for the sign-in service exists only
+  Enter the roles that person holds in the app, separated by commas, such as
+  `user` or `user,admin`. This stand-in for the sign-in service exists only
   in the local build.
 - If you work with an AI assistant such as Claude Code, ask it to read
   `AGENTS.md` first; the rules there are the ones CI enforces.

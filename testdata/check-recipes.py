@@ -55,6 +55,18 @@ def main():
         if lang == "html":
             write(os.path.join("internal", "web", "templates", "rota.html"), b)
 
+    # A recipe that declares roles adds them to app.yaml, as an author would,
+    # so that the routes naming them still generate.
+    for lang, b in blocks:
+        if lang == "yaml" and b.startswith("roles:\n"):
+            y_path = os.path.join(app, "app.yaml")
+            y = open(y_path).read()
+            if "\nroles:\n" not in y:
+                print("FAIL app.yaml no longer has the roles list the role recipe adds to")
+                sys.exit(1)
+            y = y.replace("\nroles:\n", "\nroles:\n" + b[len("roles:\n"):], 1)
+            open(y_path, "w").write(y)
+
     srv_path = os.path.join(web, "server.go")
     srv = open(srv_path).read()
     route_lines = [l.strip() for b in go for l in b.splitlines() if l.strip().startswith("rt.")]

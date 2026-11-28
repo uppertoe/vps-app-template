@@ -1,6 +1,8 @@
 # Generated from the app's route list by vps-app-kit. Do not edit:
 # change the routes in the app, then run make generate.
 # Keep comments free of braces: the server's route renderer counts them.
+# scaffold-app-label: "Starter app"
+# scaffold-roles: admin "Administrator"
 starter.{$DOMAIN} {
 	# GET /healthz: public (container health check)
 	@r1 path /healthz
@@ -18,15 +20,15 @@ starter.{$DOMAIN} {
 			import strip_public
 		}
 	}
-	# GET /admin: group starterapp_admin
+	# GET /admin: role admin
 	@r3 path /admin
 	handle @r3 {
-		import protected_groups "starterapp_admin" starterapp:8080
+		import role "starterapp" "admin" starterapp:8080
 	}
-	# GET /notes, POST /notes: signed in
+	# GET /notes, POST /notes: role user
 	@r4 path /notes
 	handle @r4 {
-		import protected starterapp:8080
+		import role "starterapp" "user" starterapp:8080
 	}
 	# GET /<$>: public (the landing page)
 	@r5 path /
@@ -52,9 +54,11 @@ starter.{$DOMAIN} {
 			import strip_public
 		}
 	}
-	# Any path the app did not register.
+	# Any path the app did not register: answered 404 by Caddy, so nothing
+	# undeclared reaches the app. On a site with roles it is answered only
+	# to a holder of the user role, as the renderer requires of a catch-all.
 	handle {
-		# scaffold-lint: open-path -- every other path: answered 404 by Caddy, nothing reaches the app
+		import role_gate "starterapp" "user"
 		respond 404
 	}
 }

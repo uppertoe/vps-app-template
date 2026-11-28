@@ -38,11 +38,11 @@ func newServer(t *testing.T, site Site) http.Handler {
 	return srv.Handler()
 }
 
-func get(h http.Handler, path, email, groups string) *httptest.ResponseRecorder {
+func get(h http.Handler, path, email, roles string) *httptest.ResponseRecorder {
 	r := httptest.NewRequest("GET", path, nil)
 	if email != "" {
 		r.Header.Set(gateway.HeaderEmail, email)
-		r.Header.Set(gateway.HeaderGroups, groups)
+		r.Header.Set(gateway.HeaderRoles, roles)
 	}
 	w := httptest.NewRecorder()
 	h.ServeHTTP(w, r)
@@ -52,20 +52,20 @@ func get(h http.Handler, path, email, groups string) *httptest.ResponseRecorder 
 func TestPagesRender(t *testing.T) {
 	h := newServer(t, Site{})
 	for _, c := range []struct {
-		path, email, groups string
-		status              int
-		contains            string
+		path, email, roles string
+		status             int
+		contains           string
 	}{
 		{"/", "", "", 200, "Sign in to see the shared notes"},
 		{"/privacy", "", "", 200, "holds no personal information"},
 		{"/notes", "ann@example.org", "user", 200, "No notes have been saved yet."},
 		{"/notes", "", "", 401, "Sign-in is required"},
 		{"/admin", "ann@example.org", "user", 403, "You do not have access to this page"},
-		{"/admin", "ann@example.org", "user,starterapp_admin", 200, "0 notes have been saved."},
+		{"/admin", "ann@example.org", "user,admin", 200, "0 notes have been saved."},
 	} {
-		w := get(h, c.path, c.email, c.groups)
+		w := get(h, c.path, c.email, c.roles)
 		if w.Code != c.status || !strings.Contains(w.Body.String(), c.contains) {
-			t.Errorf("%s as %q: %d, want %d containing %q", c.path, c.groups, w.Code, c.status, c.contains)
+			t.Errorf("%s as %q: %d, want %d containing %q", c.path, c.roles, w.Code, c.status, c.contains)
 		}
 	}
 }
@@ -75,7 +75,7 @@ func TestAdminLinkOnlyForAdmins(t *testing.T) {
 	if strings.Contains(get(h, "/notes", "a@example.org", "user").Body.String(), `href="/admin"`) {
 		t.Error("a user who is not in the group sees the admin link")
 	}
-	if !strings.Contains(get(h, "/notes", "a@example.org", "user,starterapp_admin").Body.String(), `href="/admin"`) {
+	if !strings.Contains(get(h, "/notes", "a@example.org", "user,admin").Body.String(), `href="/admin"`) {
 		t.Error("a group member does not see the admin link")
 	}
 }
@@ -87,7 +87,7 @@ func TestAddNote(t *testing.T) {
 		r.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 		r.Header.Set("Origin", origin)
 		r.Header.Set(gateway.HeaderEmail, "ann@example.org")
-		r.Header.Set(gateway.HeaderGroups, "user")
+		r.Header.Set(gateway.HeaderRoles, "user")
 		if htmx {
 			r.Header.Set("HX-Request", "true")
 		}
@@ -164,7 +164,7 @@ func TestOversizedBodyRefused(t *testing.T) {
 	r.Header.Set("Origin", origin)
 	r.Header.Set("HX-Request", "true")
 	r.Header.Set(gateway.HeaderEmail, "ann@example.org")
-	r.Header.Set(gateway.HeaderGroups, "user")
+	r.Header.Set(gateway.HeaderRoles, "user")
 	w := httptest.NewRecorder()
 	h.ServeHTTP(w, r)
 	if w.Code == http.StatusOK {

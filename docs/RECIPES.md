@@ -10,7 +10,7 @@ Register the route with its access level in `Routes`
 (`internal/web/server.go`):
 
 ```go
-rt.HandleFunc("GET /rota", access.SignedIn(), s.rota)
+rt.HandleFunc("GET /rota", access.Role("user"), s.rota)
 ```
 
 Write the handler in a file named after the area of the site, such as
@@ -45,19 +45,30 @@ guard. Add the page to `PAGES` in `e2e/browser_check.py`, and add a test in
 `internal/web/web_test.go` that requests it as someone who should be admitted
 and as someone who should not.
 
-## A page for one group, or for one domain
+## A page for one role
 
-```go
-rt.HandleFunc("GET /reports", access.Group("starterapp_reports"), s.reports)
-rt.HandleFunc("GET /staff", access.Domain("rch.org.au"), s.staff)
-rt.HandleFunc("GET /either", access.DomainOrGroup([]string{"rch.org.au"}, []string{"starterapp_reports"}), s.either)
+Declare the role under `roles` in `app.yaml`, with the label the sign-in
+service's administrator will see:
+
+```yaml
+roles:
+  - name: reviewer
+    label: Reviewer
+  - name: coordinator
+    label: Coordinator
 ```
 
-An administrator adds people to a group on the sign-in service's Groups page.
-Name a new group after the app, as `starterapp_reports` is, so it cannot be
-confused with another app's group. To show something only to a group's
-members within a page, test it in the template with
-`{{if .Identity.InGroup "starterapp_reports"}}`.
+Then name it on the route:
+
+```go
+rt.HandleFunc("GET /reports", access.Role("reviewer"), s.reports)
+```
+
+The sign-in service's administrator decides who holds each role, on the
+app's page there: everyone at one organisation's domain, a list, or named
+people. The app never stores who holds a role. To show something only to a
+role's holders within a page, test it in the template with
+`{{if .Identity.HasRole "reviewer"}}`.
 
 ## Pages under one path share one access level
 
@@ -68,8 +79,8 @@ action cannot live at `/cases/{id}/select` while staff read
 Give actions with a narrower level their own prefix:
 
 ```go
-rt.HandleFunc("GET /cases/{id}", access.SignedIn(), s.showCase)
-rt.HandleFunc("POST /selection/{id}", access.Group("starterapp_coordinators"), s.setSelection)
+rt.HandleFunc("GET /cases/{id}", access.Role("user"), s.showCase)
+rt.HandleFunc("POST /selection/{id}", access.Role("coordinator"), s.setSelection)
 ```
 
 ## A change to the database
@@ -499,8 +510,8 @@ time, and an interrupted run should do no harm when it runs again.
 ## Who is signed in
 
 In a handler, `gateway.From(r.Context())` returns the identity on any route
-that is not public. Its fields are `Email`, `Name`, `Role` and `Groups`, with
-`InGroup`, `AtDomain`, `IsAdmin` and `Display()` to ask about them. In a
+that is not public. Its fields are `Email`, `Name` and `Roles`, with
+`HasRole`, `AtDomain` and `Display()` to ask about them. In a
 template, the same identity is `.Identity`, and `.SignedIn` says whether
 there is one. Never read a name, an email address or a role from a form or a
 query string.

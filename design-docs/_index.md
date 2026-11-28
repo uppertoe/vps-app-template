@@ -17,7 +17,7 @@ folder, so keep secrets, patient information and internal identifiers out.
 | Role | Held by | Does in the app |
 |---|---|---|
 | Staff member | Anyone who signs in through the gateway | Reads and adds notes |
-| Administrator | Members of the starterapp_admin group | Sees the administration page |
+| Administrator | Holders of the app's Administrator role | Sees the administration page |
 
 ## Connections
 

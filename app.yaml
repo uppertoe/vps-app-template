@@ -35,6 +35,13 @@ outbound: []
 # Services that send the app signed deliveries (see the kit's webhook package).
 webhooks: []
 
+# The app's roles beyond user, which every app has. A route needs a role with
+# access.Role in internal/web/server.go, and the sign-in service's
+# administrator decides who holds each role on the app's page there.
+roles:
+  - name: admin
+    label: Administrator
+
 # Gateway groups whose members the app reads when nobody is signed in, such
 # as for a weekly email to a group (see docs/RECIPES.md). The server gives
 # the app a private network to the gateway only when this list is not empty.

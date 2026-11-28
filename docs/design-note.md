@@ -107,7 +107,7 @@ apps already do the same thing by hand.
 
 | Package | Provides | Drawn from |
 |---|---|---|
-| `gateway` | Reads `Remote-Email`, `Remote-User` and `Remote-Groups` into an `Identity` on gated routes only | fellows `identity.go`, every gated app |
+| `gateway` | Reads `Remote-Email`, `Remote-User` and `Remote-Roles` into an `Identity` on gated routes only | fellows `identity.go`, every gated app |
 | `router` | Route registration in which every route declares its access level; refuses access by default | new |
 | `secure` | Security headers, CSP with per-response nonce, same-origin check on writes, body limit, `no-store` on signed-in pages | fellows `security.go` |
 | `assets` | `asset()` content-hash URLs and immutable caching | fellows, caffeine, narrator |
@@ -123,17 +123,19 @@ maps to exactly one Caddy guard, and there are no others.
 |---|---|---|
 | `Public` | `strip_public` | Anyone; the app receives no identity |
 | `Webhook` | `strip_public` | A request with a valid signature; no identity |
-| `SignedIn` | `protected` | Any signed-in user, but not a guest |
-| `SignedInOrGuest` | `protected_open` | Any signed-in user and guests from open registration |
-| `Domain(d)` | `protected_domains` | Users with an address at the domain |
-| `Group(g)` | `protected_groups` | Members of the group, including a guest an admin has placed in it and a break-glass card for it |
-| `DomainOrGroup(d, g)` | `protected_access` | Either of the above |
+| `Role(r)` | `import role "<app>" "<r>"` | A signed-in person who holds the role in the app; any role satisfies `user` |
+
+Who holds each role is decided on the gateway's admin pages: a domain group,
+a list, named people, a break-glass card or guests. The app declares its
+roles beyond `user` in `app.yaml`, and the snippet carries them to the
+gateway's role manifest.
 
 The app enforces the same level itself from the `Remote-*` headers, so either
 layer alone keeps a path closed. On a `Public` or `Webhook` route the kit does
-not read those headers at all. The role is read only from the first element
-of `Remote-Groups`, groups are compared exactly in lower case, and a request
-carrying more than one value for any `Remote-*` header is refused.
+not read those headers at all. Roles are read from `Remote-Roles` and
+compared exactly in lower case, a request admitted by a network with nobody
+signed in is refused by the app's own check, and a request carrying more than
+one value for any `Remote-*` header is refused.
 
 The kit generates the app's `.caddy` snippet from the route list, and CI
 fails if the committed snippet differs from a fresh one. The snippet ends in
@@ -169,7 +171,7 @@ question a privacy review always asks.
 |---|---|---|---|
 | People in a browser | In | Through Caddy and the gateway; the app reads only the three `Remote-*` headers through `gateway` | 1 |
 | Public pages | In | Declared `Public`; the `.caddy` snippet uses `strip_public`, which removes the auth cookie and any `Remote-*` header a client sends | 1 |
-| Guests from open registration | In | Declared `SignedInOrGuest`; every other level refuses guests | 1 |
+| Guests from open registration | In | Admitted only to a role the gateway's admin pages give to guests | 1 |
 | Webhooks from outside services | In | Declared `Webhook`, outside the gateway, with the checks set out below | 1 |
 | Sending email | Out | SES over SMTP on port 587 through `mail`; credentials from `aws-ses-setup.py` | 1 |
 | Outside HTTPS APIs (such as Anthropic or RxNav) | Out | Through `egress` only, hosts listed in `app.yaml`; the design-docs page names what data each one receives | 1 |
@@ -282,8 +284,8 @@ because a check that never fails proves nothing.
    - the page: `hx-on` or `x-html`, and a write from a
      sibling subdomain or with `Origin: null`;
    - identity: a route with no access level, forged `Remote-*` headers on a
-     public or webhook path, a guest on a `SignedIn` route, a user outside
-     the group on a group route, a public catch-all, and a Caddy matcher or
+     public or webhook path, a person without the role on a role route, a
+     public catch-all, and a Caddy matcher or
      path variant that disagrees with the router;
    - webhooks: unsigned, badly signed, stale, replayed and oversized
      deliveries;

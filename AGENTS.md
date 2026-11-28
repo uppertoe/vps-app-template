@@ -14,16 +14,14 @@ the usual changes; follow the nearest one.
 - Every route is registered in `internal/web/server.go`, in `Routes`, with an
   access level from `github.com/uppertoe/vps-app-kit/access`. A route without
   a level does not compile.
-- Choose the narrowest level that works: `Group("starterapp_admin")` for
-  administration, `SignedIn()` for anyone signed in, `Public("reason")` only
-  for pages anyone in the world may read. The sign-in service on a shared
-  server may admit people from more than one organisation, so if a page is
-  for one organisation's staff only, use `Domain("<their domain>")` rather
-  than `SignedIn()`, and ask the owner which domain.
-- Name new groups after the app with underscores, such as
-  `starterapp_coordinators`.
-- Group membership is set in the sign-in service. Never store a list of a
-  group's members in the app, its database or its settings.
+- Choose the narrowest level that works: `Role("admin")` for administration,
+  `Role("user")` for the app's ordinary users, `Public("reason")` only for
+  pages anyone in the world may read. A new role is declared under `roles` in
+  `app.yaml`, with a label, and named in lower case, such as `coordinator`.
+- Who holds each role is decided on the sign-in service's admin pages: for
+  example, the user role for everyone at one organisation's domain, and the
+  admin role for named people. Never store a list of a role's holders in the
+  app, its database or its settings.
 - One path prefix has one access level: a route such as `/cases/{id}` guards
   everything under `/cases/`. Put an action with a narrower level under its
   own prefix (see `docs/RECIPES.md`).
